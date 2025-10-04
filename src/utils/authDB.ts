@@ -4,6 +4,7 @@ import {
   proto,
   AuthenticationState,
   SignalDataTypeMap,
+  SignalDataSet,
 } from '@itsukichan/baileys';
 import BaileysSession from '../database/models/BaileysSession.js';
 export async function useSequelizeAuthState(botId: number) {
@@ -32,9 +33,9 @@ export async function useSequelizeAuthState(botId: number) {
       return data;
     },
 
-    set: async (data: Partial<AuthenticationState['keys']>) => {
+    set: async (data: SignalDataSet) => {
       for (const _key in data) {
-        const key = _key as keyof AuthenticationState['keys'];
+        const key = _key as keyof SignalDataTypeMap;
         saved.keys[key] = saved.keys[key] || {};
         Object.assign(saved.keys[key], data[key]);
       }
