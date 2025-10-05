@@ -16,7 +16,7 @@
 
 ### Windows/Linux
 
-Faça o download da última versão do bot [clicando aqui](https://github.com/HugoLibanori/masterbot-whatsapp/), e com o terminal aberto, entre na pasta do bot.
+Faça o download da última versão do bot [clicando aqui](https://github.com/HugoLibanori/masterbot-whatsapp-buttons/), e com o terminal aberto, entre na pasta do bot.
 
 Instale as dependências:
 
@@ -258,5 +258,3 @@ Gerencie seu grupo com funções avançadas (admin)
 ## 🙏 Agradecimentos
 
 - [Baileys](https://github.com/WhiskeySockets/Baileys) - Biblioteca de uso para conexão ao whatsapp
-
-- [LBot-whatsapp](https://github.com/victorsouzaleal/lbot-whatsapp) - Bot que me basiei para esse projeto com algumas alterações próprias.
