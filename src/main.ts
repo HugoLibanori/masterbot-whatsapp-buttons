@@ -22,6 +22,7 @@ import { BotData } from './configs/configBot/BotData.js';
 import { Bot } from 'interfaces/Bot.js';
 import { retryCache, groupCache, messageStoreCache } from './utils/caches.js';
 import { useSequelizeAuthState } from './utils/authDB.js';
+import { startConversationResetScheduler } from './schenduler/conversationResetScheduler.js';
 
 let botInfo: Partial<Bot> | null = null;
 let fullBoot = false;
@@ -152,6 +153,7 @@ async function startBot() {
     if (!existDotEnv) await createDotEnv();
 
     checkEnvironmentVariables();
+    startConversationResetScheduler();
     await connectBD();
     await connectWhatsapp();
   } catch (err) {
