@@ -70,7 +70,7 @@ export function commandInfo() {
             '*Comandos executados* : {p4}\n' +
             '*Contato do criador* : wa.me/{p5}\n' +
             '*Versão atual* : {p6}\n' +
-            '*GitHub* : https://github.com/victorsouzaleal/lbot-whatsapp\n',
+            '*GitHub* : https://github.com/HugoLibanori/masterbot-whatsapp-buttons\n',
         },
       },
     },
@@ -524,6 +524,7 @@ export function commandInfo() {
         msgs: {
           resposta: 'Você acabou de dar um tapa na rabetona da(o) 😏 @{p1} 😈 safada(o)!',
           bot: '[❗] *ATENÇÃO* - O bot não pode ser tapado!',
+          dono: '[❗] *ATENÇÃO* - O dono do bot não pode ser tapado! 😏',
         },
       },
       ppt: {

@@ -111,7 +111,7 @@ const connectWhatsapp = async () => {
         for (const update of groupUpdates) {
           try {
             if (!update.id) continue;
-            const metadata = await sock.groupMetadata(update.id);
+            const metadata = (await groupCache.get(update.id)) as types.MyGroupMetadata;
             await eventHandler.updateDataGroups([metadata]);
           } catch (err) {
             console.error(`Erro ao buscar metadata do grupo ${update.id}`, err);

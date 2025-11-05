@@ -6,6 +6,7 @@ import path from 'path';
 import { ISocket } from '../../../types/MyTypes/index.js';
 import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg, createText } from '../../../utils/utils.js';
+import * as userController from '../../../bot/controllers/UserController.js';
 
 // === PRÉ-CARREGAR GIFS COMO BUFFER ===
 const pathGifs = path.resolve(process.cwd(), 'src', 'bot', 'midia', 'gifs');
@@ -44,6 +45,8 @@ const command: Command = {
       grupo: { mentionedJid },
     } = messageContent;
 
+    const numberOwner = await userController.getOwner();
+
     if (!quotedMsg && mentionedJid.length === 0)
       return await sock.replyText(id_chat, commandErrorMsg(command), message);
 
@@ -61,6 +64,10 @@ const command: Command = {
       return await sock.replyText(id_chat, textMessage.diversao.tapa.msgs.bot, message);
     }
 
+    if (userMentioned === numberOwner) {
+      return await sock.replyText(id_chat, textMessage.diversao.tapa.msgs.dono, message);
+    }
+
     const gifKeys = Object.keys(gifBuffers);
     if (gifKeys.length === 0) {
       return await sock.replyText(id_chat, 'Nenhum GIF disponível!', message);
@@ -71,10 +78,7 @@ const command: Command = {
 
     await sock.sendTextWithVideoMentions(
       id_chat,
-      createText(
-        textMessage.diversao.tapa.msgs.resposta,
-        userMentioned.replace('@s.whatsapp.net', ''),
-      ),
+      createText(textMessage.diversao.tapa.msgs.resposta, userMentioned.replace('@lid', '')),
       [userMentioned],
       buffer,
     );

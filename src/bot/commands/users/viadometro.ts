@@ -56,7 +56,7 @@ const command: Command = {
         idResposta = contentQuotedMsg.message;
         alvo = contentQuotedMsg.sender;
       }
-      if (numberOwner == alvo) indexAleatorio = 0;
+      if (numberOwner === alvo) indexAleatorio = 0;
       let respostaTexto = createText(
         textMessage.diversao.viadometro.msgs.resposta,
         respostas[indexAleatorio],

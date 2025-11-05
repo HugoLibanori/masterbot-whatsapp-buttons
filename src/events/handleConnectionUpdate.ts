@@ -49,7 +49,6 @@ export const handleConnectionUpdate = async (
   }
 
   if (connection === 'open') {
-    console.log('Conexão aberta com sucesso!');
     try {
       const botData = await botController.getBotData();
 

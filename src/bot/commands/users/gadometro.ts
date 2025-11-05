@@ -30,7 +30,7 @@ const command: Command = {
       command,
       contentQuotedMsg,
     } = messageContent;
-    const botInfo = dataBot;
+
     const numberOwner = await userController.getOwner();
 
     try {
