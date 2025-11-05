@@ -13,7 +13,10 @@ import { handleConnectionUpdate } from './events/handleConnectionUpdate.js';
 import { processUniqueMessage } from './middleware/processUniqueMessage.js';
 import { Socket } from './class/Socket.js';
 import { createDotEnv } from './utils/createDotEnv.js';
-import { checkEnvironmentVariables } from './utils/utils.js';
+import {
+  checkEnvironmentVariables,
+  converterDataISOParaTimestampEmSegundos,
+} from './utils/utils.js';
 import { Event } from './class/Event.js';
 import { BotData } from './configs/configBot/BotData.js';
 import { Bot } from 'interfaces/Bot.js';
@@ -67,8 +70,12 @@ const connectWhatsapp = async () => {
     // ✅ Mensagens recebidas
     if (events['messages.upsert']) {
       const { messages } = events['messages.upsert'];
+      const startBot = converterDataISOParaTimestampEmSegundos(String(botInfo?.started!));
       for (const message of messages) {
+        // console.log('Mensagem recebida:', message);
+        // console.log('Processando mensagem:', message.message?.extendedTextMessage?.contextInfo);
         if (message.key.fromMe) continue;
+        if (message?.messageTimestamp < startBot) continue;
 
         try {
           messageStoreCache.set(message.key.remoteJid, message);

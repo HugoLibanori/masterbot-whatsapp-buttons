@@ -10,7 +10,6 @@ import { groupCache } from '../../utils/caches.js';
 const normalizeQuoted = (raw: any): any => {
   if (!raw) return null;
 
-  // já é envelope de mensagem válido (ex: imageMessage, extendedTextMessage etc)
   if (
     typeof raw === 'object' &&
     (raw.extendedTextMessage ||
@@ -23,12 +22,10 @@ const normalizeQuoted = (raw: any): any => {
     return raw;
   }
 
-  // se for string, transforma em extendedTextMessage
   if (typeof raw === 'string') {
     return { extendedTextMessage: { text: raw } };
   }
 
-  // fallback: retorna como veio
   return raw;
 };
 
@@ -42,8 +39,12 @@ const contentMessage = async (
 
     const msg = message.message;
     const type = getContentType(msg);
-    const numberBot = sock.user?.id.replace(/:\d+/, '');
+    const numberBot = sock.user?.lid?.replace(/:\d+/, '');
     const numberOwner = await userController.getOwner();
+    const idSender =
+      [message?.key?.remoteJidAlt, message?.key?.remoteJid]?.find((jid) =>
+        jid?.includes('@s.whatsapp.net'),
+      ) || '';
 
     const messageKey = type as keyof types.MyWAMessageContent;
     const content = msg?.[messageKey] as
@@ -57,10 +58,9 @@ const contentMessage = async (
       content?.caption || msg?.conversation || msg?.extendedTextMessage?.text || '',
     );
 
-    const id_chat =
-      (message.key?.remoteJidAlt?.replace(/:\d+/, '') ||
-        message.key?.remoteJid?.replace(/:\d+/, '')) ??
-      '';
+    const id_chat = message?.key?.remoteJid?.includes('@g.us')
+      ? message.key?.remoteJid?.replace(/:\d+/, '')
+      : message.key?.remoteJidAlt?.replace(/:\d+/, '');
 
     const id_group = message.key?.remoteJid?.includes('@g.us') ? message.key?.remoteJid : null;
 
@@ -77,10 +77,9 @@ const contentMessage = async (
           messageContent.textFull?.split(' ')?.slice(1)?.join(' ')?.trim()) ??
         '';
       messageContent.pushName = message.pushName;
-      messageContent.sender =
-        messageContent.isGroup && message.key.participant
-          ? message.key?.participant?.replace(/:\d+/, '')
-          : id_chat;
+      messageContent.sender = messageContent.isGroup
+        ? message.key?.participantAlt?.replace(/:\d+/, '')
+        : idSender.replace(/:\d+/, '');
       messageContent.isOwnerBot = messageContent.sender === numberOwner;
       messageContent.command =
         (msg?.buttonsResponseMessage?.selectedDisplayText || '')
@@ -97,7 +96,6 @@ const contentMessage = async (
           messageContent.textFull?.split(' ').slice(1)) ??
         [];
       messageContent.message = msg;
-      // corrigido: deve ser && para não classificar texto como mídia
       messageContent.messageMedia = type !== typeMessages.TEXT && type !== typeMessages.EXTEXT;
     }
 
@@ -149,7 +147,7 @@ const contentMessage = async (
         groupCache.set(id_group, groupMetadata);
       }
       const participant = groupMetadata.participants.find(
-        (p) => p.id === message.key?.participantAlt,
+        (p) => p.id === message.key?.participantAlt?.replace(/:\d+/, ''),
       );
       Object.assign(messageContent.grupo, {
         id_group: groupMetadata?.id ?? '',
@@ -158,7 +156,7 @@ const contentMessage = async (
         participants: groupMetadata.participants.map((p) => p.id) ?? [],
         owner: groupMetadata.owner?.replace(/:\d+/, '') ?? '',
         isBotAdmin: (() => {
-          const bot = groupMetadata.participants.find((p) => p.id === numberBot);
+          const bot = groupMetadata.participants.find((p) => p.lid === numberBot);
           return bot?.admin === 'admin' || bot?.admin === 'superadmin';
         })(),
         isAdmin: participant?.admin === 'admin' || participant?.admin === 'superadmin',
@@ -174,7 +172,7 @@ const contentMessage = async (
         contextInfo?.quotedMessage?.viewOnceMessageV2?.message ||
         contextInfo?.quotedMessage;
 
-      const quotedMsgId = contextInfo?.participant || contextInfo?.remoteJid || '';
+      const quotedMsgId = contextInfo?.participant || contextInfo?.remoteJidAlt || '';
 
       if (quotedMessageRaw && quotedMsgId) {
         const quotedMessage = normalizeQuoted(quotedMessageRaw);
@@ -197,7 +195,6 @@ const contentMessage = async (
 
         let generatedMessage: any = null;
         try {
-          // A função espera o conteúdo da mensagem (ex: { extendedTextMessage: {...} }) — não sempre { message: ... }
           if (
             quotedMessage &&
             typeof quotedMessage === 'object' &&
@@ -212,7 +209,6 @@ const contentMessage = async (
               userJid: messageContent.sender!,
             });
           } else if (typeof bodyText === 'string') {
-            // fallback para string pura
             generatedMessage = generateWAMessageFromContent(
               quotedMsgId,
               { extendedTextMessage: { text: bodyText } },

@@ -405,30 +405,31 @@ export const obterYTMP3 = async (
 };
 
 export const obterYTMP4 = async (
-  id_video: string,
-): Promise<{ resultado?: Buffer; erro?: boolean }> => {
+  url: string,
+): Promise<{
+  resultado?: {
+    buffer: Buffer;
+    title?: string;
+    durationFormatted?: string;
+    thumbnail?: string;
+    isLiveContent?: boolean;
+  };
+  erro?: boolean;
+}> => {
   try {
-    const info = await ytdl.getInfo(id_video, {
-      agent: proxyAgent,
-      playerClients: ['ANDROID', 'WEB', 'WEB_EMBEDDED', 'TV', 'IOS'],
+    const { data } = await axios.get('http://localhost:8000/download-mp4', {
+      params: { url },
     });
-    const streamDownload = ytdl.downloadFromInfo(info, {
-      quality: 'lowestvideo',
-      filter: 'audioandvideo',
-    });
-    const pass = new PassThrough();
-    streamDownload.pipe(pass);
 
-    const chunks: Buffer[] = [];
-
-    return new Promise((resolve) => {
-      pass.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-      pass.on('end', async () => resolve({ resultado: Buffer.concat(chunks) }));
-      pass.on('error', (err) => {
-        console.error('Erro no stream:', err);
-        resolve({ erro: true });
-      });
-    });
+    return {
+      resultado: {
+        buffer: Buffer.from(data.buffer, 'base64'),
+        title: data.title,
+        durationFormatted: data.durationFormatted,
+        thumbnail: data.thumbnail,
+        isLiveContent: data.isLiveContent,
+      },
+    };
   } catch (err) {
     console.error('Erro ao baixar MP3 do YouTube:', err);
     return { erro: true };

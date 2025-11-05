@@ -4,6 +4,7 @@ import { ISocket } from '../../../types/MyTypes/index.js';
 import { commandErrorMsg, createText, downloadBufferLink } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import axios from 'axios';
+import { snapsave } from 'snapsave-media-downloader';
 
 interface InstagramMedia {
   tipo: 'image' | 'video' | string;
@@ -20,36 +21,26 @@ async function fetchInstagramLinks(
   instagramUrl: string,
   dataBot: Partial<Bot>,
 ): Promise<InstagramMedia[]> {
-  const options = {
-    method: 'GET',
-    url: 'https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index',
-    params: {
-      url: instagramUrl,
-    },
-    headers: {
-      'x-rapidapi-key': dataBot.apis?.rapidAPI.api_key || '',
-      'x-rapidapi-host': 'instagram-downloader-download-instagram-videos-stories.p.rapidapi.com',
-    },
-  };
-
   try {
-    const response = await axios.request(options);
+    const response = await snapsave(instagramUrl);
 
-    let type = response.data.Type === 'Post-Video' ? 'video' : 'image';
+    const arrayRespostasMidias: InstagramMedia[] = [];
 
-    const mediaArray: Media[] = Array.isArray(response.data.media)
-      ? response.data.media
-      : [response.data.media];
+    if (!response?.data?.media) {
+      throw new Error('Nenhum link de média encontrado na resposta da API.');
+    }
 
-    const arrayRespostasMidias: InstagramMedia[] = await Promise.all(
-      mediaArray.map(async (mediaObj: Media) => {
-        const url: string = mediaObj.media || (mediaObj as unknown as string);
-        return {
-          tipo: mediaObj.Type || type,
-          resultado: await downloadBufferLink(url),
-        };
-      }),
-    );
+    for (const mediaItem of response?.data?.media) {
+      const mediaLink = mediaItem?.url;
+      const mediaType = mediaItem.type === 'video' ? 'video' : 'image';
+
+      const mediaBuffer = await downloadBufferLink(mediaLink!);
+
+      arrayRespostasMidias.push({
+        tipo: mediaType,
+        resultado: mediaBuffer,
+      });
+    }
 
     return arrayRespostasMidias;
   } catch (error) {

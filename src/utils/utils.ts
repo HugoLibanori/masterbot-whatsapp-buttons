@@ -787,3 +787,13 @@ const obterDadosRodadas = async (url: string): Promise<RodadaBrasileirao[]> => {
 
   return rodadas;
 };
+
+export const converterDataISOParaTimestampEmSegundos = (dataISO: string): number => {
+  const data = new Date(dataISO);
+
+  const timestampEmMilissegundos = data.getTime();
+
+  const timestampEmSegundos = Math.floor(timestampEmMilissegundos / 1000);
+
+  return timestampEmSegundos;
+};

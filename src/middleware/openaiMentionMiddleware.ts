@@ -54,7 +54,7 @@ export async function openaiMentionMiddleware(
     return false;
   }
 
-  const botJid = `${dataBot.number_bot}`;
+  const botJid = `240072045686979@lid`;
 
   const nomesBot = ['master', 'm@ste®', 'm@ster', 'mestre'];
 
@@ -62,7 +62,7 @@ export async function openaiMentionMiddleware(
     textFull.toLowerCase().includes(nome.toLowerCase()),
   );
 
-  const isReplyToBot = contentQuotedMsg?.sender === botJid;
+  const isReplyToBot = contentQuotedMsg?.sender === '240072045686979@lid';
   const isMentionedByAt = mentionedJid?.includes(botJid);
 
   const textUser = isMentionedByAt ? textReceived : textFull;

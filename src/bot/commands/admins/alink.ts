@@ -36,7 +36,7 @@ const command: Command = {
       });
 
     const estadoNovo = !dataBd.antilink.status;
-    await grupoController.changeAntiLink(id_group, estadoNovo, objPlataforma);
+    await grupoController.changeAntiLink(id_chat, estadoNovo, objPlataforma);
     const resposta = estadoNovo
       ? textMessage.grupo.alink.msgs.ligado
       : textMessage.grupo.alink.msgs.desligado;

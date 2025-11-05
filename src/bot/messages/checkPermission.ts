@@ -22,19 +22,21 @@ export const checkPermission = async (
     return false;
   }
 
-  if (isGroup) {
-    if (admin && !isAdmin) {
-      if (jid) await sock.sendText(jid, text.outros.permissao.apenas_admin);
-      return false;
-    }
-    if (cmdBotAdmin && !isBotAdmin) {
-      if (jid) await sock.sendText(jid, text.outros.permissao.bot_admin);
-      return false;
-    }
-  } else {
-    if (group || admin) {
-      if (jid) await sock.sendText(jid, text.outros.permissao.grupo);
-      return false;
+  if (!isOwnerBot) {
+    if (isGroup) {
+      if (admin && !isAdmin) {
+        if (jid) await sock.sendText(jid, text.outros.permissao.apenas_admin);
+        return false;
+      }
+      if (cmdBotAdmin && !isBotAdmin) {
+        if (jid) await sock.sendText(jid, text.outros.permissao.bot_admin);
+        return false;
+      }
+    } else {
+      if (group || admin) {
+        if (jid) await sock.sendText(jid, text.outros.permissao.grupo);
+        return false;
+      }
     }
   }
 

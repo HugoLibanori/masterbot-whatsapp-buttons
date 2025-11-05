@@ -54,14 +54,26 @@ const command: Command = {
 
       await sock.sendImage(id_chat, bufferImg.data, mensagemEspera);
 
-      const { resultado: resultadoYTMP4, erro } = await api.obterYTMP4(resultadoInfoVideo?.videoId);
+      let videoUrl: string;
+
+      if (usuarioTexto.startsWith('http')) {
+        videoUrl = usuarioTexto;
+      } else {
+        const results = await api.getInfoVideoYT(usuarioTexto);
+        if (!results) {
+          return await sock.replyText(id_chat, '❌ Não encontrei nada no YouTube.', message);
+        }
+        videoUrl = `https://www.youtube.com/watch?v=${results.resultado?.videoId}`;
+      }
+
+      const { resultado: resultadoYTMP4, erro } = await api.obterYTMP4(videoUrl);
       if (erro)
         return await sock.replyText(id_chat, textMessage.downloads.yt.msgs.erro_restrict, message);
       if (!resultadoYTMP4) return console.log('Erro ao obter o vídeo do Youtube');
       await sock.replyFileBuffer(
         typeMessages.VIDEO,
         id_chat,
-        resultadoYTMP4,
+        resultadoYTMP4.buffer,
         '',
         message,
         'video/mp4',
