@@ -36,7 +36,7 @@
     "@distube/ytdl-core": "^4.16.12",
     "@google-cloud/vision": "^5.3.1",
     "@hapi/boom": "^10.0.1",
-    "@itsukichan/baileys": "^7.3.2",
+    "@itsukichan/baileys": "npm:@innovatorssoft/baileys",
     "@nuclearplayer/ytdl-core": "^4.16.13",
     "canvas": "^3.1.2",
     "child_process": "^1.0.2",

@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:latest
+    image: mysql:8.4
     container_name: ${CONTAINER_NAME}
     restart: always
     ports:
@@ -8,6 +8,15 @@ services:
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    command: >
+      --max_binlog_size=100M
+      --binlog_expire_logs_seconds=259200
+      --skip-log-bin
+      --innodb_buffer_pool_size=512MB
+      --innodb_log_file_size=256MB
+      --performance_schema=0
+      --general_log=0
+      --slow_query_log=0
     volumes:
       - db_data:/var/lib/mysql
 
