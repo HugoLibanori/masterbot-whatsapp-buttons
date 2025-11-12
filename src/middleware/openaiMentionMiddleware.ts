@@ -39,48 +39,44 @@ export async function openaiMentionMiddleware(
     if (id_group !== dataBot.grupo_oficial && sender !== numberOwner) {
       if (!grupoVerificado) return false;
     }
-  } else if (!isGroup) {
-    const grupoEmComum = await grupoController.obterGrupoEmComum(dataBot.grupo_oficial!, sender);
 
-    if (!grupoEmComum && sender !== numberOwner) return false;
-  }
+    if (await checkCommandExists(dataBot, command)) return true;
 
-  if (await checkCommandExists(dataBot, command)) return true;
+    if (!isGroup || !dataGroup?.openai?.status || !textFull) return true;
 
-  if (!isGroup || !dataGroup?.openai?.status || !textFull) return true;
+    if (dataBot.apis?.openai?.api_key === '') {
+      await sock.replyText(id_chat, textMessage.admin.apis.msgs.sem_api, message);
+      return false;
+    }
 
-  if (dataBot.apis?.openai?.api_key === '') {
-    await sock.replyText(id_chat, textMessage.admin.apis.msgs.sem_api, message);
-    return false;
-  }
+    const botJid = `240072045686979@lid`;
 
-  const botJid = `240072045686979@lid`;
+    const nomesBot = ['master', 'm@ste®', 'm@ster', 'mestre'];
 
-  const nomesBot = ['master', 'm@ste®', 'm@ster', 'mestre'];
-
-  const foiMencionadoPorNome = nomesBot.some((nome) =>
-    textFull.toLowerCase().includes(nome.toLowerCase()),
-  );
-
-  const isReplyToBot = contentQuotedMsg?.sender === '240072045686979@lid';
-  const isMentionedByAt = mentionedJid?.includes(botJid);
-
-  const textUser = isMentionedByAt ? textReceived : textFull;
-
-  if (!(isMentionedByAt || isReplyToBot || foiMencionadoPorNome)) return true;
-
-  await sock.sendReact(message.key, '💬', id_chat);
-
-  const resposta = await conversationController.conversationOpenAI(id_group!, textUser, dataBot);
-
-  if (resposta) {
-    await sock.replyText(
-      id_chat,
-      createText(textMessage.utilidades.master.msgs.resposta, resposta),
-      message,
+    const foiMencionadoPorNome = nomesBot.some((nome) =>
+      textFull.toLowerCase().includes(nome.toLowerCase()),
     );
-    await sock.sendReact(message.key, '✅', id_chat);
-    return false;
+
+    const isReplyToBot = contentQuotedMsg?.sender === '240072045686979@lid';
+    const isMentionedByAt = mentionedJid?.includes(botJid);
+
+    const textUser = isMentionedByAt ? textReceived : textFull;
+
+    if (!(isMentionedByAt || isReplyToBot || foiMencionadoPorNome)) return true;
+
+    await sock.sendReact(message.key, '💬', id_chat);
+
+    const resposta = await conversationController.conversationOpenAI(id_group!, textUser, dataBot);
+
+    if (resposta) {
+      await sock.replyText(
+        id_chat,
+        createText(textMessage.utilidades.master.msgs.resposta, resposta),
+        message,
+      );
+      await sock.sendReact(message.key, '✅', id_chat);
+      return false;
+    }
   }
 
   return true;

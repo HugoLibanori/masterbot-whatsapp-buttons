@@ -89,24 +89,24 @@ export const checkingSendMessage = async (
     }
 
     // VERIFICANDO SE O USUARIO ESTA NO GRUPO OFICIAL DO BOT
-    if (!isGroup) {
-      const grupoEmComum = await grupoController.obterGrupoEmComum(dataBot.grupo_oficial!, sender);
-      if (!grupoEmComum && sender !== numberOwner) {
-        let linkConvite = dataBot.grupo_oficial
-          ? await sock.getLinkGroup(dataBot.grupo_oficial)
-          : '[❗] Sem grupo oficial.';
-        await sock.sendLinkWithPrevia(
-          id_chat,
-          createText(
-            commandsInfo.grupo.permissao.grupo_comum,
-            linkConvite!,
-            numberOwner.replace('@s.whatsapp.net', ''),
-            'https://www.facebook.com/profile.php?id=61569409066442',
-          ),
-        );
-        return false;
-      }
-    }
+    // if (!isGroup) {
+    //   const grupoEmComum = await grupoController.obterGrupoEmComum(dataBot.grupo_oficial!, sender);
+    //   if (!grupoEmComum && sender !== numberOwner) {
+    //     let linkConvite = dataBot.grupo_oficial
+    //       ? await sock.getLinkGroup(dataBot.grupo_oficial)
+    //       : '[❗] Sem grupo oficial.';
+    //     await sock.sendLinkWithPrevia(
+    //       id_chat,
+    //       createText(
+    //         commandsInfo.grupo.permissao.grupo_comum,
+    //         linkConvite!,
+    //         numberOwner.replace('@s.whatsapp.net', ''),
+    //         'https://www.facebook.com/profile.php?id=61569409066442',
+    //       ),
+    //     );
+    //     return false;
+    //   }
+    // }
 
     // VERIFICANDO SE O USUARIO JA TEM 3 ADVERTENCIAS E EXPULSANDO
     let advertencias = await userController?.getUserWarning(sender);

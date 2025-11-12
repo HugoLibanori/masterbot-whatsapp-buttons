@@ -47,11 +47,9 @@ export const checkingMessage = async (
     if (!command.startsWith(prefix)) return;
 
     const commandName = command.toLowerCase().replace(new RegExp('^' + escapeRegex(prefix)), '');
-
     const cmd = Array.from(commands.values()).find((c) => c.aliases.includes(commandName));
 
     if (!cmd) return;
-
     const permission = await checkPermission(sock, message, cmd, messageContent, dataBot);
 
     if (!permission) return;
