@@ -332,4 +332,8 @@ export class Socket implements ISocket {
   ): Promise<types.MyWAMessage | undefined> {
     return await SocketFns.sendButtons(this.sock, id_chat, options);
   }
+
+  async sendButtonPix(id_chat: string, options: types.MyButtonPix): Promise<types.MyWAMessage> {
+    return await SocketFns.sendButtonPix(this.sock, id_chat, options);
+  }
 }

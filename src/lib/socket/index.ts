@@ -46,3 +46,4 @@ export * from './deleteMessageJoinRequest.js';
 export * from './logger.js';
 export * from './updateMediaMessage.js';
 export * from './sendButtons.js';
+export * from './sendButtonPix.js';

@@ -75,6 +75,10 @@ const command: Command = {
           buttonId: `menu_${id_chat}`,
           buttonText: { displayText: `${prefix}menu` },
         },
+        {
+          buttonId: `menu_${id_chat}`,
+          buttonText: { displayText: `${prefix}pix` },
+        },
       ],
       footer: 'Digite o comando desejado.',
     };
@@ -89,6 +93,10 @@ const command: Command = {
 
     if (!args.length) {
       baseOptions.text = responseData + menu.menuPrincipal();
+      baseOptions.buttons.push({
+        buttonId: `menu_${id_chat}`,
+        buttonText: { displayText: `${prefix}pix` },
+      });
       await sock.sendButtons(id_chat, baseOptions);
       return;
     }

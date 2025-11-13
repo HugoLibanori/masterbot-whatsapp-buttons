@@ -13,7 +13,7 @@ export default function configWaSocket(
 ) {
   const config: types.MyUserFacingSocketConfig = {
     logger: pino({ level: 'silent' }),
-    browser: ['Chrome (Linux)', '', ''],
+    browser: ['M@ste® Bot (Linux)', '', ''],
     auth: state,
     version,
     msgRetryCounterCache: retryCache,

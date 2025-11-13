@@ -327,6 +327,14 @@ export function commandInfo() {
             'Artistas: *{p6}*\n',
         },
       },
+      pix: {
+        descricao: '',
+        guia: `Ex: *${prefixo}pix* - Envia a chave Pix para apoiar o criador do bot.\n`,
+        msgs: {
+          resposta: `💰 Olá *{p1}!*
+Aqui está a *chave Pix* para apoiar o criador do bot 👇.\nSinta-se a vontade para doar qualquer valor!`,
+        },
+      },
     },
     //COMANDOS FIGURINHAS
     figurinhas: {

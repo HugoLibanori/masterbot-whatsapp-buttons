@@ -197,4 +197,6 @@ export interface ISocket {
   updateMediaMessage(msg: types.MyWAMessage): Promise<types.MyWAMessage | undefined>;
 
   sendButtons(id_chat: string, options: types.MyButtons): Promise<types.MyWAMessage | undefined>;
+
+  sendButtonPix(id_chat: string, options: types.MyButtonPix): Promise<types.MyWAMessage>;
 }

@@ -11,3 +11,4 @@ export * from './MyWAMediaUpload.js';
 export * from './MyLogger.js';
 export * from './MyGroupParticipant.js';
 export * from './MyParticipantActions.js';
+export * from './MyButtonPix.js';

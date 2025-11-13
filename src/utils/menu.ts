@@ -144,6 +144,9 @@ export const menuUtilidades = () => {
 📌 *UTILIDADES*
 
 ➤ *\`${prefixo}clima cidade\`* - _Mostra como está o tempo na cidade_
+
+➤ *\`${prefixo}pix\`* - _Envia a chave Pix para apoiar o criador do bot._
+
 ╘═══════════════╛
 ⧖───────────────⧗
 ╰╼❥ ⌬ Dev: ${nome_adm?.trim()} | *© ${nome_bot?.trim()}™*`;
