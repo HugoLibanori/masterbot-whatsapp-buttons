@@ -332,7 +332,35 @@ export function commandInfo() {
         guia: `Ex: *${prefixo}pix* - Envia a chave Pix para apoiar o criador do bot.\n`,
         msgs: {
           resposta: `💰 Olá *{p1}!*
-Aqui está a *chave Pix* para apoiar o criador do bot 👇.\nSinta-se a vontade para doar qualquer valor!`,
+Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Valores acima de R$2,00 reais usuário será *VIP*.\n\nAo enviar o *PIX* adicione o DDD + número na descrição do *PIX* ou envie para meu dono: @{p2}\n\nDigite ${prefixo}vantagens para saber as vantagens dos planos.`,
+        },
+      },
+      vantagens: {
+        descricao: '',
+        guia: `Ex: *${prefixo}vantagens* - Mostra as vantagens do bot.\n`,
+        msgs: {
+          resposta: `
+💎 *VANTAGENS PREMIUM & VIP* 💎
+
+👤 *Usuário Comum*
+- Acesso limitado aos comandos básicos.
+- Sujeito a limite diário de uso.
+
+💠 *Usuário Premium*
+- Acesso liberado a quase todos os comandos.
+- Limite diário muito maior.
+- Prioridade de resposta do bot.
+- Suporte básico via PV.
+
+👑 *Usuário VIP*
+- Acesso total a *todos os recursos* do bot.
+- Sem limites de comandos.
+- Respostas mais rápidas.
+- Recursos beta e exclusivos.
+- Suporte personalizado direto com o criador.
+
+💬 Use: *${prefixo}pix* para apoiar e se tornar Premium/VIP.
+    `,
         },
       },
     },
@@ -1502,7 +1530,7 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\nSinta-se a vontade 
           desativado: '✅ O Limite diário de comandos foi desativado com sucesso',
           resposta_excedeu_limite:
             '[❗] {p1} -> Você ultrapassou seu limite diário de comandos por dia.\n\n' +
-            'Entre em contato com o dono para ver sua situação : https://wa.me/{p2}',
+            'Entre em contato com o dono para ver sua situação:\n\nDono: @{p2}',
         },
       },
       taxacomandos: {

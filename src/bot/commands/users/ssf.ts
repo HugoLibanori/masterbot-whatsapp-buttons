@@ -12,6 +12,7 @@ const command: Command = {
   name: 'ssf',
   description: 'Cria figurinha sem fundo.',
   category: 'users',
+  minType: 'premium',
   aliases: ['ssf'],
   exec: async (
     sock: ISocket,

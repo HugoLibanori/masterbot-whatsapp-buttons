@@ -9,6 +9,7 @@ export interface Command {
   description: string;
   category: string;
   aliases: string[];
+  minType?: 'comum' | 'premium' | 'vip';
   group?: boolean;
   admin?: boolean;
   owner?: boolean;

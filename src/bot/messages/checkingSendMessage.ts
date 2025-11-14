@@ -7,6 +7,7 @@ import * as botController from '../../bot/controllers/BotController.js';
 import { commandInfo } from '../../bot/messages/messagesObj.js';
 import { createText, checkCommandExists, checkExpirationDate } from '../../utils/utils.js';
 import { typeMessages } from '../../bot/messages/contentMessage.js';
+import { avisoLimiteDiarioCache } from '../../utils/caches.js';
 
 export const checkingSendMessage = async (
   sock: ISocket,
@@ -88,26 +89,6 @@ export const checkingSendMessage = async (
       }
     }
 
-    // VERIFICANDO SE O USUARIO ESTA NO GRUPO OFICIAL DO BOT
-    // if (!isGroup) {
-    //   const grupoEmComum = await grupoController.obterGrupoEmComum(dataBot.grupo_oficial!, sender);
-    //   if (!grupoEmComum && sender !== numberOwner) {
-    //     let linkConvite = dataBot.grupo_oficial
-    //       ? await sock.getLinkGroup(dataBot.grupo_oficial)
-    //       : '[❗] Sem grupo oficial.';
-    //     await sock.sendLinkWithPrevia(
-    //       id_chat,
-    //       createText(
-    //         commandsInfo.grupo.permissao.grupo_comum,
-    //         linkConvite!,
-    //         numberOwner.replace('@s.whatsapp.net', ''),
-    //         'https://www.facebook.com/profile.php?id=61569409066442',
-    //       ),
-    //     );
-    //     return false;
-    //   }
-    // }
-
     // VERIFICANDO SE O USUARIO JA TEM 3 ADVERTENCIAS E EXPULSANDO
     let advertencias = await userController?.getUserWarning(sender);
     if (isGroup && advertencias === 3 && !isAdmin) {
@@ -134,6 +115,9 @@ export const checkingSendMessage = async (
 
     //ATUALIZE NOME DO USUÁRIO
     await userController.updateName(sender, pushName ?? 'Sem nome!');
+
+    // VERIFICANDO EXPIRAÇÃO DO PLANO ATIVO DO USUÁRIO
+    await userController.checkUserExpiration(sender);
 
     if (existCommands || autostickerpv || autostickergp) {
       if (dataBot?.command_rate?.status) {
@@ -186,15 +170,18 @@ export const checkingSendMessage = async (
           if (!ultrapassou) {
             await userController.addContagemDiaria(sender);
           } else {
-            await sock.replyText(
-              id_chat,
-              createText(
-                commandsInfo.admin.limitediario.msgs.resposta_excedeu_limite,
-                pushName ?? 'Sem nome!',
-                numberOwner.replace('@s.whatsapp.net', ''),
-              ),
-              message,
-            );
+            if (!avisoLimiteDiarioCache.get(sender)) {
+              avisoLimiteDiarioCache.set(sender, true);
+              await sock.sendTextWithMentions(
+                id_chat,
+                createText(
+                  commandsInfo.admin.limitediario.msgs.resposta_excedeu_limite,
+                  pushName ?? 'Sem nome!',
+                  numberOwner.replace('@s.whatsapp.net', ''),
+                ),
+                [numberOwner],
+              );
+            }
             return false;
           }
         } else {

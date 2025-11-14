@@ -147,6 +147,8 @@ export const menuUtilidades = () => {
 
 ➤ *\`${prefixo}pix\`* - _Envia a chave Pix para apoiar o criador do bot._
 
+➤ *\`${prefixo}vantagens\`* - _Mostra as vantagens dos planos_
+
 ╘═══════════════╛
 ⧖───────────────⧗
 ╰╼❥ ⌬ Dev: ${nome_adm?.trim()} | *© ${nome_bot?.trim()}™*`;

@@ -59,6 +59,7 @@ const command: Command = {
   name: 'tk',
   description: 'Download de video/imagem do Tiktok.',
   category: 'users',
+  minType: 'vip',
   aliases: ['tk'],
   group: false,
   admin: false,

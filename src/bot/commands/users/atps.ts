@@ -18,6 +18,7 @@ const command: Command = {
   name: 'atps',
   description: 'Cria uma figurinha de texto em video animado.',
   category: 'users',
+  minType: 'premium',
   aliases: ['atps', 'attp'], // não mude o index 0 do array pode dar erro no guia dos comandos.
   exec: async (
     sock: ISocket,

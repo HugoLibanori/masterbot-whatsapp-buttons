@@ -12,6 +12,7 @@ const command: Command = {
   name: 'rbg',
   description: 'Remove fundo de imagem',
   category: 'users',
+  minType: 'premium',
   aliases: ['rbg'], // não mude o index 0 do array pode dar erro no guia dos comandos.
   group: false,
   admin: false,

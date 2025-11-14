@@ -3,6 +3,8 @@ import { MessageContent, Command, Bot, CommandReturn } from '../../../interfaces
 import { ISocket } from '../../../types/MyTypes/index.js';
 import { createText } from '../../../utils/utils.js';
 
+import * as userController from '../../../bot/controllers/UserController.js';
+
 const command: Command = {
   name: 'Pix',
   description: 'Envia a chave Pix do criador do bot.',
@@ -22,11 +24,17 @@ const command: Command = {
     textMessage,
   ): Promise<CommandReturn> => {
     const { id_chat, pushName } = messageContent;
+    const numberOwner = await userController.getOwner();
 
     try {
-      await sock.sendText(
+      await sock.sendTextWithMentions(
         id_chat,
-        createText(textMessage.utilidades.pix.msgs.resposta, pushName || 'Usuário'),
+        createText(
+          textMessage.utilidades.pix.msgs.resposta,
+          pushName || 'Usuário',
+          numberOwner.replace('@s.whatsapp.net', ''),
+        ),
+        [numberOwner],
       );
       await sock.sendButtonPix(id_chat, {
         text: '',

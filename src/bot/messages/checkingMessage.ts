@@ -13,6 +13,8 @@ import {
 import { ISocket } from '../../types/MyTypes/index.js';
 import { typeMessages } from './contentMessage.js';
 import { BotData } from '../../configs/configBot/BotData.js';
+import * as userController from '../controllers/UserController.js';
+import { verificarCooldown } from '../../utils/cooldownUtils.js';
 
 export const checkingMessage = async (
   sock: ISocket,
@@ -30,6 +32,7 @@ export const checkingMessage = async (
     },
     isGroup,
     pushName,
+    sender,
   } = messageContent;
 
   const dataBot: Partial<Bot> = BotData.get() || {};
@@ -38,8 +41,10 @@ export const checkingMessage = async (
 
   const prefix = dataBot.prefix;
   const commandExists = await checkCommandExists(dataBot, command);
+
   const autostickerpv =
     !isGroup && (type === typeMessages.IMAGE || type === typeMessages.VIDEO) && dataBot.autosticker;
+
   const autostickergp =
     isGroup && (type === typeMessages.IMAGE || type === typeMessages.VIDEO) && autosticker;
 
@@ -48,18 +53,26 @@ export const checkingMessage = async (
 
     const commandName = command.toLowerCase().replace(new RegExp('^' + escapeRegex(prefix)), '');
     const cmd = Array.from(commands.values()).find((c) => c.aliases.includes(commandName));
-
     if (!cmd) return;
-    const permission = await checkPermission(sock, message, cmd, messageContent, dataBot);
 
+    const permission = await checkPermission(sock, message, cmd, messageContent, dataBot);
     if (!permission) return;
 
+    // Se pediu "guia"
     const msgGuide = !args?.length ? false : args[0].toLocaleLowerCase() === 'guia';
-
     if (msgGuide) {
       const guide = await commandGuide(sock, dataBot, commandName, cmd);
       await sock.sendText(id_chat, guide);
       return;
+    }
+
+    if (sender) {
+      const userData = await userController.getUser(sender);
+      const tipo = userData?.tipo || 'comum';
+
+      const permitido = await verificarCooldown(sock, sender, tipo, pushName!, id_chat);
+
+      if (!permitido) return;
     }
 
     logCommand(command, pushName ?? 'Desconhecido', group_name, isGroup!);

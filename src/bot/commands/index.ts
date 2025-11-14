@@ -39,6 +39,7 @@ const loadCommands = async (baseDir: string) => {
         commands.set(commandName, {
           name: commandName,
           description: command.description || 'Sem descrição',
+          minType: command.minType,
           aliases: command.aliases || [],
           group: command.group || false,
           admin: command.admin || false,

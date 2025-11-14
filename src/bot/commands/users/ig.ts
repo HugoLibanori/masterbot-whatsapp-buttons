@@ -53,6 +53,7 @@ const command: Command = {
   name: 'ig',
   description: 'Download de video/imagem do instagram.',
   category: 'users',
+  minType: 'vip',
   aliases: ['ig'],
   group: false,
   admin: false,

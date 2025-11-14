@@ -1,8 +1,9 @@
-import Sequelize from 'sequelize';
+import Sequelize, { Op } from 'sequelize';
 
 import Users from '../../database/models/User.js';
 import { User } from '../../interfaces/index.js';
 import Bot from '../../database/models/Bot.js';
+import { resetCooldown } from '../../utils/cooldownUtils.js';
 
 export const registerUser = async (sender: string, pushName: string) => {
   const user: User = {
@@ -14,6 +15,8 @@ export const registerUser = async (sender: string, pushName: string) => {
     advertencia: 0,
     pack: null,
     autor: null,
+    expira_em: null,
+    plano_ativo: false,
   };
   return await Users.create(user);
 };
@@ -33,10 +36,7 @@ export const getPack = async (id_usuario: string): Promise<string | null> => {
   return pack ? pack.get({ plain: true }).pack : null;
 };
 
-export const updatePack = async (
-  id_usuario: string,
-  texto: string,
-): Promise<string | null> => {
+export const updatePack = async (id_usuario: string, texto: string): Promise<string | null> => {
   const pack = await Users.findOne({ where: { id_usuario } });
   if (!pack) return null;
   await pack.update({ pack: texto });
@@ -48,26 +48,17 @@ export const getAuthor = async (id_usuario: string): Promise<string | null> => {
   return author ? author.get({ plain: true }).autor : null;
 };
 
-export const updateAuthor = async (
-  id_usuario: string,
-  texto: string,
-): Promise<string | null> => {
+export const updateAuthor = async (id_usuario: string, texto: string): Promise<string | null> => {
   const autor = await Users.findOne({ where: { id_usuario } });
   if (!autor) return null;
   await autor.update({ autor: texto });
   return autor.get({ plain: true }).autor;
 };
 
-export const changeWarning = async (
-  id_usuario: string,
-  advertencia: number,
-) => {
+export const changeWarning = async (id_usuario: string, advertencia: number) => {
   const user = await Users.findOne({ where: { id_usuario } });
   if (!user) return;
-  await Users.update(
-    { advertencia: user.advertencia + advertencia },
-    { where: { id_usuario } },
-  );
+  await Users.update({ advertencia: user.advertencia + advertencia }, { where: { id_usuario } });
 };
 
 export const getUserWarning = async (id_usuario: string): Promise<number> => {
@@ -95,9 +86,7 @@ export const registerOwner = async (id_usuario: string) => {
 export const cleanType = async (tipo: string, botInfo: Partial<Bot>) => {
   let { limite_diario } = botInfo;
   if (
-    !limite_diario?.limite_tipos[
-      tipo as keyof typeof limite_diario.limite_tipos
-    ] ||
+    !limite_diario?.limite_tipos[tipo as keyof typeof limite_diario.limite_tipos] ||
     tipo === 'comum' ||
     tipo === 'dono'
   )
@@ -112,6 +101,69 @@ export const getUsersType = async (tipo: string): Promise<Users[]> => {
 
 export const changeUserType = async (id_usuario: string, tipo: string) => {
   await Users.update({ tipo }, { where: { id_usuario } });
+
+  resetCooldown(id_usuario);
+};
+
+export const setUserPlan = async (id_usuario: string, tipo: 'premium' | 'vip', dias: number) => {
+  if (isNaN(dias) || dias < 0) {
+    throw new Error('O valor de dias é inválido.');
+  }
+
+  let expiraEm = null;
+
+  if (dias > 0) {
+    expiraEm = new Date();
+    expiraEm.setDate(expiraEm.getDate() + dias);
+  }
+
+  await Users.update(
+    {
+      tipo,
+      plano_ativo: true,
+      expira_em: expiraEm, // <= se dias = 0 vem null
+    },
+    { where: { id_usuario } },
+  );
+
+  resetCooldown(id_usuario);
+
+  return expiraEm;
+};
+
+export const checkUserExpiration = async (id_usuario: string) => {
+  const user = await Users.findByPk(id_usuario);
+  if (!user || !user.expira_em) return false;
+
+  const agora = new Date();
+  if (user.expira_em <= agora && user.plano_ativo) {
+    await Users.update(
+      { tipo: 'comum', plano_ativo: false, expira_em: null },
+      { where: { id_usuario } },
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const checkAllExpirations = async () => {
+  const agora = new Date();
+  const expirados = await Users.findAll({
+    where: {
+      plano_ativo: true,
+      expira_em: { [Op.lte]: agora },
+    },
+  });
+
+  for (const user of expirados) {
+    await Users.update(
+      { tipo: 'comum', plano_ativo: false, expira_em: null },
+      { where: { id_usuario: user.id_usuario } },
+    );
+  }
+
+  return expirados.length;
 };
 
 export const alterarTipoUsuario = async (
@@ -122,9 +174,7 @@ export const alterarTipoUsuario = async (
   let { limite_diario } = botInfo;
   if (!limite_diario) return false;
   if (
-    limite_diario.limite_tipos[
-      tipo as keyof typeof limite_diario.limite_tipos
-    ] &&
+    limite_diario.limite_tipos[tipo as keyof typeof limite_diario.limite_tipos] &&
     tipo !== 'dono'
   ) {
     await changeUserType(id_usuario, tipo);
@@ -158,8 +208,7 @@ export const verificarUltrapassouLimiteComandos = async (
   if (!usuario) return false;
 
   if (botInfo?.limite_diario?.limite_tipos) {
-    const tipo =
-      usuario.tipo as keyof typeof botInfo.limite_diario.limite_tipos;
+    const tipo = usuario.tipo as keyof typeof botInfo.limite_diario.limite_tipos;
     const maxComandos = botInfo.limite_diario.limite_tipos[tipo]?.comandos || 0;
     if (!maxComandos) return false;
     return usuario.comandos_dia >= maxComandos;

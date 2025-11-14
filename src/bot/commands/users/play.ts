@@ -12,6 +12,7 @@ const command: Command = {
   name: 'play',
   description: 'Download de musicas do Youtube.',
   category: 'users',
+  minType: 'vip',
   aliases: ['play'], // não mude o index 0 do array pode dar erro no guia dos comandos.
   group: false,
   admin: false,

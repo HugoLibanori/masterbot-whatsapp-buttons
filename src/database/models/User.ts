@@ -1,15 +1,6 @@
-import {
-  Sequelize,
-  Model,
-  DataTypes,
-  InferAttributes,
-  InferCreationAttributes,
-} from "sequelize";
+import { Sequelize, Model, DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 
-export default class Users extends Model<
-  InferAttributes<Users>,
-  InferCreationAttributes<Users>
-> {
+export default class Users extends Model<InferAttributes<Users>, InferCreationAttributes<Users>> {
   declare id_usuario: string;
   declare nome: string;
   declare comandos_total: number;
@@ -18,6 +9,8 @@ export default class Users extends Model<
   declare advertencia: number;
   declare pack: string | null;
   declare autor: string | null;
+  declare expira_em: Date | null;
+  declare plano_ativo: boolean;
 
   static initial(sequelize: Sequelize) {
     Users.init(
@@ -27,40 +20,31 @@ export default class Users extends Model<
           primaryKey: true,
           allowNull: false,
         },
-        nome: {
-          type: DataTypes.STRING,
-        },
-        comandos_total: {
-          type: DataTypes.INTEGER,
-          defaultValue: 0,
-        },
-        comandos_dia: {
-          type: DataTypes.INTEGER,
-          defaultValue: 0,
-        },
-        tipo: {
-          type: DataTypes.STRING,
-          defaultValue: "comum",
-        },
-        advertencia: {
-          type: DataTypes.INTEGER,
-          defaultValue: 0,
-        },
-        pack: {
-          type: DataTypes.STRING,
+        nome: DataTypes.STRING,
+        comandos_total: { type: DataTypes.INTEGER, defaultValue: 0 },
+        comandos_dia: { type: DataTypes.INTEGER, defaultValue: 0 },
+        tipo: { type: DataTypes.STRING, defaultValue: 'comum' },
+        advertencia: { type: DataTypes.INTEGER, defaultValue: 0 },
+        pack: { type: DataTypes.STRING, defaultValue: null },
+        autor: { type: DataTypes.STRING, defaultValue: null },
+
+        // 🔽 novos campos
+        expira_em: {
+          type: DataTypes.DATE,
+          allowNull: true,
           defaultValue: null,
         },
-        autor: {
-          type: DataTypes.STRING,
-          defaultValue: null,
+        plano_ativo: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
         },
       },
       {
         sequelize,
-        tableName: "users",
+        tableName: 'users',
         timestamps: true,
-        createdAt: "created_at",
-        updatedAt: "updated_at",
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
       },
     );
   }

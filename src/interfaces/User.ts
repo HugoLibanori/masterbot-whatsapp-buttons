@@ -7,4 +7,6 @@ export interface User {
   advertencia: number;
   pack: string | null;
   autor: string | null;
+  expira_em: Date | null;
+  plano_ativo: boolean;
 }
