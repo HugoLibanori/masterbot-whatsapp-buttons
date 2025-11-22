@@ -44,9 +44,6 @@ export const checkingSendMessage = async (
     isGroup && (type === typeMessages.IMAGE || type === typeMessages.VIDEO) && autosticker;
 
   try {
-    //ENVIE QUE LEU A MENSAGEM
-    await sock.readMessage(message.key);
-
     //SE O PV DO BOT NÃO ESTIVER LIBERADO
     if (!isGroup && !isOwnerBot && !dataBot.commands_pv) return false;
 
@@ -135,6 +132,9 @@ export const checkingSendMessage = async (
     await userController.checkUserExpiration(sender);
 
     if (existCommands || autostickerpv || autostickergp) {
+      // Marcar como lida somente quando vamos responder/agir
+      await sock.readMessage(message.key);
+
       if (dataBot?.command_rate?.status) {
         let limiteComando = await botController.checkLimitCommand(
           sender,

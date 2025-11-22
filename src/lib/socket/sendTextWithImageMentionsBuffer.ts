@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
 import { updatePresence } from './updatePresence.js';
+import { schedule } from './rateLimiter.js';
 
 export async function sendTextWithImageMentionsBuffer(
   sock: types.MyWASocket,
@@ -9,9 +10,11 @@ export async function sendTextWithImageMentionsBuffer(
   buffer: Buffer,
 ) {
   await updatePresence(sock, id_chat, 'composing');
-  return await sock.sendMessage(id_chat, {
-    caption: texto,
-    mentions: mencionados,
-    image: buffer,
-  });
+  return await schedule(() =>
+    sock.sendMessage(id_chat, {
+      caption: texto,
+      mentions: mencionados,
+      image: buffer,
+    }),
+  );
 }

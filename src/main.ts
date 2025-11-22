@@ -7,7 +7,6 @@ dotenv.config({ quiet: true, path: path.resolve('.env') });
 
 import configWaSocket from './configs/ConfigBaileys/configWASocket.js';
 import { promptLoginMethod } from './utils/promptLoginMethod.js';
-import { handleJoinRequest } from './events/handleJoinRequest.js';
 import { handleMessageUpsert } from './events/handleMessageUpsert.js';
 import { handleConnectionUpdate } from './events/handleConnectionUpdate.js';
 import { processUniqueMessage } from './middleware/processUniqueMessage.js';
@@ -39,12 +38,12 @@ const connectWhatsapp = async () => {
 
   const socket = new Socket(sock);
 
-  let connectonType: number | null = null;
+  let connectionType: number | null = null;
   async function getConnectType(): Promise<number | null> {
-    if (connectonType === null) {
-      connectonType = await promptLoginMethod();
+    if (connectionType === null) {
+      connectionType = await promptLoginMethod();
     }
-    return connectonType;
+    return connectionType;
   }
 
   sock.ev.process(async (events) => {
@@ -70,13 +69,17 @@ const connectWhatsapp = async () => {
 
     // ✅ Mensagens recebidas
     if (events['messages.upsert']) {
+      if (!fullBoot || !botInfo?.started) {
+        return;
+      }
       const { messages } = events['messages.upsert'];
-      const startBot = converterDataISOParaTimestampEmSegundos(String(botInfo?.started!));
+      const startBot = converterDataISOParaTimestampEmSegundos(String(botInfo.started));
       for (const message of messages) {
         // console.log('Mensagem recebida:', message);
         // console.log('Processando mensagem:', message.message?.extendedTextMessage?.contextInfo);
         if (message.key.fromMe) continue;
-        if (message?.messageTimestamp < startBot) continue;
+        const ts = Number(message?.messageTimestamp ?? 0);
+        if (Number.isFinite(ts) && ts < startBot) continue;
 
         try {
           messageStoreCache.set(message.key.remoteJid, message);
@@ -112,8 +115,10 @@ const connectWhatsapp = async () => {
         for (const update of groupUpdates) {
           try {
             if (!update.id) continue;
-            const metadata = (await groupCache.get(update.id)) as types.MyGroupMetadata;
-            await eventHandler.updateDataGroups([metadata]);
+            const metadata = groupCache.get(update.id) as types.MyGroupMetadata | undefined;
+            if (metadata) {
+              await eventHandler.updateDataGroups([metadata]);
+            }
           } catch (err) {
             console.error(`Erro ao buscar metadata do grupo ${update.id}`, err);
           }
@@ -153,8 +158,8 @@ async function startBot() {
     if (!existDotEnv) await createDotEnv();
 
     checkEnvironmentVariables();
-    startConversationResetScheduler();
     await connectBD();
+    startConversationResetScheduler();
     await connectWhatsapp();
   } catch (err) {
     console.error('Erro durante a inicialização do bot:', err);

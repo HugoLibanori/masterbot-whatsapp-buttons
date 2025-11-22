@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
 import { updatePresence } from './updatePresence.js';
+import { schedule } from './rateLimiter.js';
 
 export async function replyWithMentions(
   sock: types.MyWASocket,
@@ -9,5 +10,5 @@ export async function replyWithMentions(
   quoted: types.MyWAMessage | any,
 ) {
   await updatePresence(sock, id_chat, 'composing');
-  return await sock.sendMessage(id_chat, { text, mentions }, { quoted });
+  return await schedule(() => sock.sendMessage(id_chat, { text, mentions }, { quoted }));
 }

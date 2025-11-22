@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
 import { updatePresence } from './updatePresence.js';
+import { schedule } from './rateLimiter.js';
 
 /**
  * Envia um botão de pagamento Pix interativo (payment_info)
@@ -26,8 +27,10 @@ export async function sendButtonPix(
   await updatePresence(sock, chatId, 'composing');
 
   // Envia mensagem Pix interativa
-  return await sock.sendMessage(chatId, {
-    text,
-    interactiveButtons,
-  });
+  return await schedule(() =>
+    sock.sendMessage(chatId, {
+      text,
+      interactiveButtons,
+    }),
+  );
 }

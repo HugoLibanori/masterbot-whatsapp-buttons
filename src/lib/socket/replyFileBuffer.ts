@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
 import { typeMessages } from '../../bot/messages/contentMessage.js';
+import { schedule } from './rateLimiter.js';
 
 export async function replyFileBuffer(
   sock: types.MyWASocket,
@@ -11,19 +12,21 @@ export async function replyFileBuffer(
   mimetype = '',
 ): Promise<types.MyWAMessage | undefined> {
   if (type === typeMessages.VIDEO) {
-    return await sock.sendMessage(
-      id_chat,
-      { video: buffer, caption: legenda, mimetype },
-      { quoted: quetedMsg },
+    return await schedule(() =>
+      sock.sendMessage(
+        id_chat,
+        { video: buffer, caption: legenda, mimetype },
+        { quoted: quetedMsg },
+      ),
     );
   } else if (type === typeMessages.IMAGE) {
-    return await sock.sendMessage(
-      id_chat,
-      { image: buffer, caption: legenda },
-      { quoted: quetedMsg },
+    return await schedule(() =>
+      sock.sendMessage(id_chat, { image: buffer, caption: legenda }, { quoted: quetedMsg }),
     );
   } else if (type === typeMessages.AUDIO) {
-    return await sock.sendMessage(id_chat, { audio: buffer, mimetype }, { quoted: quetedMsg });
+    return await schedule(() =>
+      sock.sendMessage(id_chat, { audio: buffer, mimetype }, { quoted: quetedMsg }),
+    );
   }
   return;
 }
