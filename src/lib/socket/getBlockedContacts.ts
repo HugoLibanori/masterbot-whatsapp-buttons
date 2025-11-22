@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
+import { schedule } from './rateLimiter.js';
 
 export async function getBlockedContacts(sock: types.MyWASocket): Promise<string[]> {
-  return await sock.fetchBlocklist();
+  return await schedule(() => sock.fetchBlocklist());
 }

@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
 import { updatePresence } from './updatePresence.js';
+import { schedule } from './rateLimiter.js';
 
 export async function sendTextWithVideoMentions(
   sock: types.MyWASocket,
@@ -9,11 +10,13 @@ export async function sendTextWithVideoMentions(
   buffer: types.MyWAMediaUpload,
 ) {
   await updatePresence(sock, id_chat, 'composing');
-  return await sock.sendMessage(id_chat, {
-    video: buffer,
-    caption: texto,
-    gifPlayback: true,
-    mentions: mencionados,
-    mimetype: 'video/mp4',
-  });
+  return await schedule(() =>
+    sock.sendMessage(id_chat, {
+      video: buffer,
+      caption: texto,
+      gifPlayback: true,
+      mentions: mencionados,
+      mimetype: 'video/mp4',
+    }),
+  );
 }

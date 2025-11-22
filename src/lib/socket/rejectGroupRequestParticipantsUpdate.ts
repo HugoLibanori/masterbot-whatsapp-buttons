@@ -1,4 +1,5 @@
 import * as types from '../../types/BaileysTypes/index.js';
+import { schedule } from './rateLimiter.js';
 
 export async function rejectGroupRequestParticipantsUpdate(
   sock: types.MyWASocket,
@@ -11,5 +12,5 @@ export async function rejectGroupRequestParticipantsUpdate(
     jid: string;
   }[]
 > {
-  return await sock.groupRequestParticipantsUpdate(chatId, participant, action);
+  return await schedule(() => sock.groupRequestParticipantsUpdate(chatId, participant, action));
 }

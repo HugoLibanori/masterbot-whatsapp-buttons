@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
 import { updatePresence } from './updatePresence.js';
+import { schedule } from './rateLimiter.js';
 
 export async function sendText(
   sock: types.MyWASocket,
@@ -7,7 +8,7 @@ export async function sendText(
   text: string,
 ): Promise<types.MyWAMessage> {
   await updatePresence(sock, chatId, 'composing');
-  return await sock.sendMessage(chatId, { text });
+  return await schedule(() => sock.sendMessage(chatId, { text }));
 }
 
 export async function sendTextReply(
@@ -17,7 +18,7 @@ export async function sendTextReply(
   quotedMsg: types.MyWAMessage,
 ) {
   await updatePresence(sock, chatId, 'composing');
-  return await sock.sendMessage(chatId, { text }, { quoted: quotedMsg });
+  return await schedule(() => sock.sendMessage(chatId, { text }, { quoted: quotedMsg }));
 }
 
 export async function sendTextWithMentions(
@@ -27,5 +28,5 @@ export async function sendTextWithMentions(
   mentions: string[],
 ): Promise<types.MyWAMessage> {
   await updatePresence(sock, chatId, 'composing');
-  return await sock.sendMessage(chatId, { text, mentions });
+  return await schedule(() => sock.sendMessage(chatId, { text, mentions }));
 }

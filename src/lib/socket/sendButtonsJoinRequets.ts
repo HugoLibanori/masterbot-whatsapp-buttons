@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
 import { updatePresence } from './updatePresence.js';
+import { schedule } from './rateLimiter.js';
 
 export async function sendButtonsJoinRequets(
   sock: types.MyWASocket,
@@ -11,10 +12,12 @@ export async function sendButtonsJoinRequets(
     throw new Error('sendButtonsJoinRequets: text and buttons are required');
   }
   await updatePresence(sock, chatId, 'composing');
-  return await sock.sendMessage(chatId, {
-    text,
-    buttons,
-    footer,
-    mentions,
-  });
+  return await schedule(() =>
+    sock.sendMessage(chatId, {
+      text,
+      buttons,
+      footer,
+      mentions,
+    }),
+  );
 }

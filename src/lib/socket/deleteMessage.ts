@@ -1,4 +1,5 @@
 import * as types from '../../types/BaileysTypes/index.js';
+import { schedule } from './rateLimiter.js';
 
 export async function deleteMessage(
   sock: types.MyWASocket,
@@ -17,5 +18,5 @@ export async function deleteMessage(
   } else {
     messageDeleted = message.key;
   }
-  return await sock.sendMessage(chatId, { delete: messageDeleted });
+  return await schedule(() => sock.sendMessage(chatId, { delete: messageDeleted }));
 }

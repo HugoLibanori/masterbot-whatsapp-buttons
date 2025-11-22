@@ -1,4 +1,5 @@
 import * as types from '../../types/BaileysTypes/index.js';
+import { schedule } from './rateLimiter.js';
 
 export async function changeGroupRestriction(
   sock: types.MyWASocket,
@@ -6,5 +7,5 @@ export async function changeGroupRestriction(
   status: boolean,
 ) {
   const config = status ? 'announcement' : 'not_announcement';
-  return await sock.groupSettingUpdate(id_grupo, config);
+  return await schedule(() => sock.groupSettingUpdate(id_grupo, config));
 }

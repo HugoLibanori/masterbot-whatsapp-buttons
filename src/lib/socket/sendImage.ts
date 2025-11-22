@@ -1,5 +1,6 @@
 import * as types from '../../types/BaileysTypes/index.js';
 import { updatePresence } from './updatePresence.js';
+import { schedule } from './rateLimiter.js';
 
 export async function sendImage(
   sock: types.MyWASocket,
@@ -8,8 +9,10 @@ export async function sendImage(
   legenda?: string,
 ): Promise<types.MyWAMessage | undefined> {
   await updatePresence(sock, chatId, 'composing');
-  return await sock.sendMessage(chatId, {
-    image: buffer,
-    caption: legenda || '',
-  });
+  return await schedule(() =>
+    sock.sendMessage(chatId, {
+      image: buffer,
+      caption: legenda || '',
+    }),
+  );
 }

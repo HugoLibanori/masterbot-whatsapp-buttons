@@ -1,4 +1,5 @@
 import * as types from '../../types/BaileysTypes/index.js';
+import { schedule } from './rateLimiter.js';
 
 export async function pinOrUnpinText(
   sock: types.MyWASocket,
@@ -14,7 +15,9 @@ export async function pinOrUnpinText(
     id: mensagemCitacao.message?.extendedTextMessage?.contextInfo?.stanzaId,
     participant: mensagemCitacao.message?.extendedTextMessage?.contextInfo?.participant,
   };
-  return await sock.sendMessage(id_chat, {
-    pin: { key: objKey, type },
-  });
+  return await schedule(() =>
+    sock.sendMessage(id_chat, {
+      pin: { key: objKey, type },
+    }),
+  );
 }
