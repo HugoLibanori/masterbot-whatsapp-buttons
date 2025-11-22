@@ -100,6 +100,26 @@ const command: Command = {
 
       await sock.sendSticker(id_chat, resultadoSticker);
       await sock.sendReact(message.key, '✅', id_chat);
+      if (sender) {
+        setImmediate(async () => {
+          try {
+            const { XPService } = await import('../../../services/XPService.js');
+            const res: any = await XPService.addEvent(sender, 'sticker_create');
+            if (res?.changed && id_chat) {
+              const { xpRules } = await import('../../../configs/xp/xpRules.js');
+              const order = xpRules.tiers.map((t) => t.name);
+              const idxOld = order.indexOf(res.oldTier);
+              const idxNew = order.indexOf(res.newTier);
+              const up = idxNew > idxOld;
+              const arrow = up ? '⬆️' : '⬇️';
+              const msg = up
+                ? `Parabéns @${sender.replace('@s.whatsapp.net', '')}! Você subiu para ${String(res.newTier).toUpperCase()}!`
+                : `Atenção @${sender.replace('@s.whatsapp.net', '')}, seu tier mudou para ${String(res.newTier).toUpperCase()}.`;
+              await sock.sendTextWithMentions(id_chat, `${arrow} ${msg}`, [sender]);
+            }
+          } catch {}
+        });
+      }
     } catch (error) {
       if (fs.existsSync(inputPathCircleVideo)) fs.unlinkSync(inputPathCircleVideo);
       if (fs.existsSync(outputPathCircleVideo)) fs.unlinkSync(outputPathCircleVideo);

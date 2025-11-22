@@ -15,6 +15,7 @@ import { typeMessages } from './contentMessage.js';
 import { BotData } from '../../configs/configBot/BotData.js';
 import * as userController from '../controllers/UserController.js';
 import { verificarCooldown } from '../../utils/cooldownUtils.js';
+// XP adicionado de forma assíncrona e dinâmica para não travar o fluxo
 
 export const checkingMessage = async (
   sock: ISocket,
@@ -77,7 +78,29 @@ export const checkingMessage = async (
 
     logCommand(command, pushName ?? 'Desconhecido', group_name, isGroup!);
 
-    return await runCommand(cmd, sock, message, messageContent, args ?? [], dataBot);
+    await runCommand(cmd, sock, message, messageContent, args ?? [], dataBot);
+
+    if (sender) {
+      setImmediate(async () => {
+        try {
+          const { XPService } = await import('../../services/XPService.js');
+          const res: any = await XPService.addEvent(sender, 'interaction');
+          if (res?.changed && id_chat) {
+            const { xpRules } = await import('../../configs/xp/xpRules.js');
+            const order = xpRules.tiers.map((t) => t.name);
+            const idxOld = order.indexOf(res.oldTier);
+            const idxNew = order.indexOf(res.newTier);
+            const up = idxNew > idxOld;
+            const arrow = up ? '⬆️' : '⬇️';
+            const msg = up
+              ? `Parabéns @${sender.replace('@s.whatsapp.net', '')}! Você subiu para ${String(res.newTier).toUpperCase()}!`
+              : `Atenção @${sender.replace('@s.whatsapp.net', '')}, seu tier mudou para ${String(res.newTier).toUpperCase()}.`;
+            await sock.sendTextWithMentions(id_chat, `${arrow} ${msg}`, [sender]);
+          }
+        } catch {}
+      });
+    }
+    return;
   } else {
     if (autostickerpv || autostickergp) {
       return await autoSticker(sock, message, messageContent, dataBot);

@@ -8,10 +8,20 @@ import Contador from './models/Contador.js';
 import GruposVerificados from './models/GrupoVerificado.js';
 import Conversation from './models/Conversation.js';
 import BaileysSession from './models/BaileysSession.js';
+import XpEvent from './models/XpEvent.js';
 
 const connection = new Sequelize(databaseConfig);
 
-const models = [Bot, Users, Grupo, Contador, GruposVerificados, Conversation, BaileysSession];
+const models = [
+  Bot,
+  Users,
+  Grupo,
+  Contador,
+  GruposVerificados,
+  Conversation,
+  BaileysSession,
+  XpEvent,
+];
 
 models.forEach((model) => {
   if ('initial' in model && typeof model.initial === 'function') {

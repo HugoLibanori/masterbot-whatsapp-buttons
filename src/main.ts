@@ -22,6 +22,8 @@ import { Bot } from './interfaces/index.js';
 import { retryCache, groupCache, messageStoreCache } from './utils/caches.js';
 import { useSequelizeAuthState } from './utils/authDB.js';
 import { startConversationResetScheduler } from './schenduler/conversationResetScheduler.js';
+import { XPService } from './services/XPService.js';
+import { startXPRecalcScheduler } from './schenduler/xpRecalcScheduler.js';
 
 let botInfo: Partial<Bot> | null = null;
 let fullBoot = false;
@@ -159,7 +161,9 @@ async function startBot() {
 
     checkEnvironmentVariables();
     await connectBD();
+    await XPService.init();
     startConversationResetScheduler();
+    startXPRecalcScheduler();
     await connectWhatsapp();
   } catch (err) {
     console.error('Erro durante a inicialização do bot:', err);
