@@ -363,6 +363,52 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
     `,
         },
       },
+      megasena: {
+        descricao: '',
+        guia:
+          `🎲 Mega-Sena\n` +
+          `Ex: *${prefixo}megasena* qtd [dezenas 6-15] [sorte N]\n` +
+          `- Gera \`qtd\` jogos aleatórios, com opção de escolher de 6 a 15 dezenas por jogo.\n` +
+          `- Use "sorte N" para marcar um número da sorte (1–60).\n\n` +
+          `Exemplos:\n` +
+          `- ${prefixo}megasena 5\n` +
+          `- ${prefixo}megasena 3 8 sorte 13\n`,
+        msgs: {},
+      },
+      lotofacil: {
+        descricao: '',
+        guia:
+          `🎲 Lotofácil\n` +
+          `Ex: *${prefixo}lotofacil* qtd [dezenas 15-20] [sorte N]\n` +
+          `- Gera \`qtd\` jogos aleatórios, com opção de escolher de 15 a 20 dezenas por jogo.\n` +
+          `- Use "sorte N" para marcar um número da sorte (1–25).\n\n` +
+          `Exemplos:\n` +
+          `- ${prefixo}lotofacil 2\n` +
+          `- ${prefixo}lotofacil 3 18 sorte 7\n`,
+        msgs: {},
+      },
+      quina: {
+        descricao: '',
+        guia:
+          `🎲 Quina\n` +
+          `Ex: *${prefixo}quina* qtd [dezenas 5-15] [sorte N]\n` +
+          `- Gera \`qtd\` jogos aleatórios, com opção de escolher de 5 a 15 dezenas por jogo.\n` +
+          `- Use "sorte N" para marcar um número da sorte (1–80).\n\n` +
+          `Exemplos:\n` +
+          `- ${prefixo}quina 4\n` +
+          `- ${prefixo}quina 5 10 sorte 80\n`,
+        msgs: {},
+      },
+      loterias: {
+        descricao: '',
+        guia:
+          `🎰 Loterias disponíveis:\n\n` +
+          `- ${prefixo}megasena qtd [dezenas 6-15] [sorte N]\n` +
+          `- ${prefixo}lotofacil qtd [dezenas 15-20] [sorte N]\n` +
+          `- ${prefixo}quina qtd [dezenas 5-15] [sorte N]\n\n` +
+          `Use "sorte N" para destacar um número da sorte no jogo.`,
+        msgs: {},
+      },
     },
     //COMANDOS FIGURINHAS
     figurinhas: {

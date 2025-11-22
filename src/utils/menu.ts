@@ -145,6 +145,12 @@ export const menuUtilidades = () => {
 
 ➤ *\`${prefixo}clima cidade\`* - _Mostra como está o tempo na cidade_
 
+➤ *\`${prefixo}megasena qtd [dezenas] [sorte N]\`* - _Gera jogos da Mega-Sena (6–15 dezenas)_
+
+➤ *\`${prefixo}lotofacil qtd [dezenas] [sorte N]\`* - _Gera jogos da Lotofácil (15–20 dezenas)_
+
+➤ *\`${prefixo}quina qtd [dezenas] [sorte N]\`* - _Gera jogos da Quina (5–15 dezenas)_
+
 ➤ *\`${prefixo}pix\`* - _Envia a chave Pix para apoiar o criador do bot._
 
 ➤ *\`${prefixo}vantagens\`* - _Mostra as vantagens dos planos_
