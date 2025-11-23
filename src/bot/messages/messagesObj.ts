@@ -409,6 +409,29 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           `Use "sorte N" para destacar um número da sorte no jogo.`,
         msgs: {},
       },
+      xp: {
+        descricao: '',
+        guia: `Ex: *${prefixo}xp* - Mostra seu XP total, XP dos últimos 30 dias e seu tier atual.\n`,
+        msgs: {},
+      },
+      meuref: {
+        descricao: '',
+        guia: `Ex: *${prefixo}meuref* - Mostra seu código de convite para indicar amigos.\n`,
+        msgs: {},
+      },
+      usaref: {
+        descricao: '',
+        guia: `Ex: *${prefixo}usaref* codigo - Usa um código de convite e dá XP ao convidador.\n`,
+        msgs: {
+          ja_ativado: 'Este número já ativou um código anteriormente.',
+          sucesso: 'Código aplicado com sucesso! O convidador recebeu o XP.',
+        },
+      },
+      topxp: {
+        descricao: '',
+        guia: `Ex: *${prefixo}topxp* semanal|mensal|geral - Mostra o ranking de XP no período.\n`,
+        msgs: {},
+      },
     },
     //COMANDOS FIGURINHAS
     figurinhas: {
@@ -1342,6 +1365,10 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
               on: '*Auto-Sticker privado* : ✅\n' + '-------------------\n',
               off: '*Auto-Sticker privado* : ❌\n' + '-------------------\n',
             },
+            xp: {
+              on: '*Sistema de XP* : ✅\n' + '-------------------\n',
+              off: '*Sistema de XP* : ❌\n' + '-------------------\n',
+            },
             autorevelar: {
               on: '*Auto-Revelar* : ✅\n' + '-------------------\n',
               off: '*Auto-Revelar* : ❌\n' + '-------------------\n',
@@ -1904,6 +1931,18 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           sucesso: '✅ Apikey adicionada com sucesso.',
           sem_api: '[❗] OPENAI ativado, mas sua Apikey da OPENAI não está configurada.',
           nome_api: `[❗] API NOME: *{p1}* não existe, de um *\`${prefixo}statusapis\`* para ver os nomes das API's`,
+        },
+      },
+      xp: {
+        descricao: '',
+        guia:
+          `🌟 *[Comando: ${prefixo}xp]*\n🧠 Sintaxe:\n- *\`${prefixo}xp\`* on - Ativa o sistema de XP.\n\n` +
+          `- *\`${prefixo}xp\`* off - Desativa o sistema de XP.\n\n` +
+          `📡 Descrição: Ativa ou desativa o sistema de experiência (XP) para os usuários do bot.\n` +
+          `> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {
+          ativado: '✅ O sistema de XP foi ativado com sucesso',
+          desativado: '✅ O sistema de XP foi desativado com sucesso',
         },
       },
     },

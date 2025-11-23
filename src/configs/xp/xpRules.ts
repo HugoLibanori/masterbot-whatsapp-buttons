@@ -25,12 +25,12 @@ export const xpRules: XPConfig = {
   },
   values: {
     sticker_create: 10,
-    interaction: 2,
+    interaction: 5,
     referral_activated: 1000,
   },
   tiers: [
     { name: 'comum', minTotal: 0, maintainLast30: 0 },
-    { name: 'premium', minTotal: 1000, maintainLast30: 200 },
+    { name: 'premium', minTotal: 3000, maintainLast30: 500 },
     { name: 'vip', minTotal: 5000, maintainLast30: 1000 },
   ],
 };

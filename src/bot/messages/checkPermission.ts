@@ -33,21 +33,19 @@ export const checkPermission = async (
     return false;
   }
 
-  if (!isOwnerBot) {
-    if (isGroup) {
-      if (cmd.admin && !isAdmin) {
-        if (id_chat) await sock.sendText(id_chat, text.outros.permissao.apenas_admin);
-        return false;
-      }
-      if (cmd.isBotAdmin && !isBotAdmin) {
-        if (id_chat) await sock.sendText(id_chat, text.outros.permissao.bot_admin);
-        return false;
-      }
-    } else {
-      if (cmd.group || cmd.admin) {
-        if (id_chat) await sock.sendText(id_chat, text.outros.permissao.grupo);
-        return false;
-      }
+  if (isGroup) {
+    if (cmd.admin && !isAdmin) {
+      if (id_chat) await sock.sendText(id_chat, text.outros.permissao.apenas_admin);
+      return false;
+    }
+    if (cmd.isBotAdmin && !isBotAdmin) {
+      if (id_chat) await sock.sendText(id_chat, text.outros.permissao.bot_admin);
+      return false;
+    }
+  } else if (!isGroup) {
+    if (cmd.group || cmd.admin) {
+      if (id_chat) await sock.sendText(id_chat, text.outros.permissao.grupo);
+      return false;
     }
   }
 

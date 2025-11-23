@@ -117,6 +117,10 @@ export class XPService {
     if (user.tipo === 'dono') return false;
     if (user.plano_ativo) return false;
 
+    // If user's current tipo is not part of XP tier names, do not override (supports custom types)
+    const tierNames = xpRules.tiers.map((t) => t.name);
+    if (!tierNames.includes(user.tipo)) return false;
+
     const total = await this.getTotalXP(userId);
     const last30 = await this.getLast30DaysXP(userId);
 

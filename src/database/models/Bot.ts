@@ -64,6 +64,7 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
       api_key: string;
     };
   };
+  declare xp: { status: boolean };
 
   static initial(sequelize: Sequelize) {
     Bot.init(
@@ -171,6 +172,11 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
               api_key: '',
             },
           },
+        },
+        xp: {
+          type: DataTypes.JSON,
+          allowNull: false,
+          defaultValue: { status: false },
         },
       },
       {

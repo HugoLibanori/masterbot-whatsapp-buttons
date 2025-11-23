@@ -155,6 +155,8 @@ export const menuUtilidades = () => {
 
 ➤ *\`${prefixo}vantagens\`* - _Mostra as vantagens dos planos_
 
+➤ *\`${prefixo}meuxp\`* - _Mostra seu XP total, XP dos últimos 30 dias e seu tier atual_
+
 ╘═══════════════╛
 ⧖───────────────⧗
 ╰╼❥ ⌬ Dev: ${nome_adm?.trim()} | *© ${nome_bot?.trim()}™*`;

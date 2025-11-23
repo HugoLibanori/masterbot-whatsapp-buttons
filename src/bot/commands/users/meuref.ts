@@ -21,6 +21,12 @@ const command: Command = {
     textMessage,
   ): Promise<CommandReturn> => {
     const { id_chat, sender, pushName } = messageContent;
+    if (!dataBot.xp?.status) {
+      return await sock.sendText(
+        id_chat,
+        `❌ ${pushName || 'Você'}, o sistema de XP está desativado no momento.`,
+      );
+    }
     if (!sender) return;
 
     const code = Buffer.from(sender).toString('base64url');

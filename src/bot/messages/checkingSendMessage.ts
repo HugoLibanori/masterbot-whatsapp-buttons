@@ -131,7 +131,7 @@ export const checkingSendMessage = async (
     // VERIFICANDO EXPIRAÇÃO DO PLANO ATIVO DO USUÁRIO
     await userController.checkUserExpiration(sender);
 
-    if (existCommands || autostickerpv || autostickergp) {
+    if (existCommands.exists || autostickerpv || autostickergp) {
       // Marcar como lida somente quando vamos responder/agir
       await sock.readMessage(message.key);
 
@@ -173,11 +173,7 @@ export const checkingSendMessage = async (
       //SE O RECURSO DE LIMITADOR DIARIO DE COMANDOS ESTIVER ATIVADO E O COMANDO NÃO ESTIVER NA LISTA DE EXCEÇÔES/INFO/GRUPO/ADMIN
       if (dataBot.limite_diario?.status) {
         await botController.checkExpirationLimit(dataBot);
-        if (
-          ((await checkCommandExists(dataBot, command)) && !msgGuia) ||
-          autostickerpv ||
-          autostickergp
-        ) {
+        if ((existCommands.exists && !msgGuia) || autostickerpv || autostickergp) {
           let ultrapassou = await userController.verificarUltrapassouLimiteComandos(
             sender,
             dataBot,

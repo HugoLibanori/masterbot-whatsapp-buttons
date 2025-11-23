@@ -22,7 +22,13 @@ const command: Command = {
     dataBot: Partial<Bot>,
     textMessage,
   ): Promise<CommandReturn> => {
-    const { id_chat } = messageContent;
+    const { id_chat, pushName } = messageContent;
+    if (!dataBot.xp?.status) {
+      return await sock.sendText(
+        id_chat,
+        `❌ ${pushName || 'Você'}, o sistema de XP está desativado no momento.`,
+      );
+    }
 
     const tipo = (args[0] || 'semanal').toLowerCase();
 
@@ -44,7 +50,7 @@ const command: Command = {
       LIMIT 10
     `;
 
-    const [rows] = await connection.query(sql) as any[];
+    const [rows] = (await connection.query(sql)) as any[];
 
     if (!rows || !rows.length) {
       await sock.sendText(id_chat, 'Ninguém no ranking ainda.');
@@ -61,8 +67,7 @@ const command: Command = {
       const uid = r.user_id as string;
       mentions.push(uid);
       const u = await Users.findOne({ where: { id_usuario: uid } });
-      const nome = u?.nome || uid.replace('@s.whatsapp.net','');
-      texto += `${medal(i)} ${nome} — ${r.total} XP\n`;
+      texto += `${medal(i)} @${uid.replace('@s.whatsapp.net', '')} — ${r.total} XP\n`;
     }
 
     await sock.sendTextWithMentions(id_chat, texto, mentions);

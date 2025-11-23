@@ -304,29 +304,26 @@ export const getRandomFilename = (ext: FileExtensions): string => {
 export const checkCommandExists = async (
   botInfo: Partial<Bot>,
   command: string,
-  id_usuario?: string,
-): Promise<boolean | string> => {
-  const ownerBot = await userController.getOwner();
-  const isOwner = ownerBot === id_usuario;
-  const commandsBasePath = path.resolve('src', 'bot', 'commands');
-  if (!command || !botInfo.prefix) return false;
+): Promise<{ exists: boolean; admin?: boolean; owner?: boolean }> => {
+  const commandsBasePath = path.resolve('dist', 'bot', 'commands');
+  if (!command || !botInfo.prefix) return { exists: false };
 
   const nameCommand = command.replace(botInfo.prefix, '').trim();
   const categories = ['admins', 'owner', 'users'];
 
   for (const category of categories) {
-    const commandPathTs = path.join(commandsBasePath, category, `${nameCommand}.ts`);
     const commandPathJs = path.join(commandsBasePath, category, `${nameCommand}.js`);
 
-    if (fs.existsSync(commandPathTs) || fs.existsSync(commandPathJs)) {
-      if ((category === 'admins' || category === 'owner') && !isOwner) {
-        return 'protegido';
-      }
-      return true;
+    if ((category === 'admins' || category === 'owner') && fs.existsSync(commandPathJs)) {
+      return { exists: true, admin: category === 'admins', owner: category === 'owner' };
+    }
+
+    if (fs.existsSync(commandPathJs)) {
+      return { exists: true };
     }
   }
 
-  return false;
+  return { exists: false };
 };
 
 export const isPlatform = async (link: string, grupo: Grupo) => {

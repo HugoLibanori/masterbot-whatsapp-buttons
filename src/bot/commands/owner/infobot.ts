@@ -46,6 +46,10 @@ const command: Command = {
     resposta += dataBot.commands_pv
       ? textMessage.admin.infobot.msgs.resposta_variavel.pvliberado.on
       : textMessage.admin.infobot.msgs.resposta_variavel.pvliberado.off;
+    // XP LIBERADO
+    resposta += dataBot.xp?.status
+      ? textMessage.admin.infobot.msgs.resposta_variavel.xp.on
+      : textMessage.admin.infobot.msgs.resposta_variavel.xp.off;
     // LIMITE COMANDOS DIARIO
     resposta += dataBot.limite_diario?.status
       ? createText(

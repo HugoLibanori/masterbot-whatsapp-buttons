@@ -67,6 +67,7 @@ export const registerBotData = async (sock?: ISocket) => {
             api_key: '',
           },
         },
+        xp: { status: false },
       },
     });
 
@@ -306,9 +307,9 @@ export const blockCommandsGlobal = async (
       );
       continue;
     }
-    const exists = checkCommandExists(dataBot, comando, id_usuario);
+    const exists = await checkCommandExists(dataBot, comando);
 
-    if (!exists) {
+    if (!exists.exists) {
       respText += createText(
         textCommands.admin.bcmdglobal.msgs.resposta_variavel.nao_existe,
         comando,
@@ -319,7 +320,7 @@ export const blockCommandsGlobal = async (
           textCommands.admin.bcmdglobal.msgs.resposta_variavel.ja_bloqueado,
           comando,
         );
-      } else if (comando.includes('menu') || typeof exists === 'string') {
+      } else if (comando.includes('menu') || exists.admin || exists.owner) {
         respText += createText(textCommands.admin.bcmdglobal.msgs.resposta_variavel.erro, comando);
       } else {
         respText += createText(
@@ -417,6 +418,13 @@ export const changeBotName = async (nome: string, botInfo: Partial<Bot>) => {
 export const changeStickerName = async (nome: string, botInfo: Partial<Bot>) => {
   let bot = botInfo;
   bot.pack_sticker = nome;
+  await updateBotData(bot);
+};
+
+export const changeXp = async (xp: boolean, botInfo: Partial<Bot>) => {
+  let bot = botInfo;
+  if (!bot.xp) return;
+  bot.xp.status = xp;
   await updateBotData(bot);
 };
 

@@ -8,6 +8,8 @@ import { convertGroupMetadataToGrupo } from '../lib/convert.js';
 import { commandInfo } from '../bot/messages/messagesObj.js';
 import { consoleErro, textColor, createText, nameBotLog } from '../utils/utils.js';
 import { updateGroupCacheParam, groupCache } from '../utils/caches.js';
+import { connection } from '../database/index.js';
+import { XPService } from '../services/XPService.js';
 
 export class Event {
   declare sock: ISocket;
@@ -82,6 +84,64 @@ export class Event {
             groupCache.set(event.id, groupInCache);
           }
         }
+
+        // XP por adicionar pessoas: apenas no grupo oficial
+        try {
+          const isOfficial = this.botInfo.grupo_oficial && event.id === this.botInfo.grupo_oficial;
+          const referrer = event.author;
+          if (
+            isOfficial &&
+            referrer &&
+            referrer !== participantId &&
+            referrer !== this.botInfo.number_bot
+          ) {
+            // garantir tabela referrals
+            const qi = connection.getQueryInterface();
+            try {
+              await qi.describeTable('referrals');
+            } catch (_) {
+              await qi.createTable('referrals', {
+                id: { type: 'BIGINT UNSIGNED', primaryKey: true, autoIncrement: true },
+                referrer_id: { type: 'VARCHAR(255)', allowNull: false },
+                referred_id: { type: 'VARCHAR(255)', allowNull: false, unique: true },
+                status: { type: 'VARCHAR(32)', allowNull: false, defaultValue: 'activated' },
+                created_at: {
+                  type: 'DATETIME',
+                  allowNull: false,
+                  defaultValue: connection.literal('CURRENT_TIMESTAMP'),
+                },
+              } as any);
+              try {
+                await connection.query(
+                  'CREATE UNIQUE INDEX idx_ref_referred ON referrals (referred_id)',
+                );
+              } catch {}
+              try {
+                await connection.query('CREATE INDEX idx_ref_referrer ON referrals (referrer_id)');
+              } catch {}
+            }
+
+            // verifica se já existe convite para o referido
+            const [exists] = (await connection.query(
+              'SELECT id FROM referrals WHERE referred_id = ? LIMIT 1',
+              { replacements: [participantId] },
+            )) as any[];
+
+            if (!exists || !exists.length) {
+              await connection.query(
+                'INSERT INTO referrals (referrer_id, referred_id, status) VALUES (?, ?, ?)',
+                { replacements: [referrer, participantId, 'activated'] },
+              );
+
+              // registra XP ao autor
+              await XPService.addEvent(referrer, 'referral_activated', {
+                referred_id: participantId,
+                source: 'group_add',
+                group_id: event.id,
+              });
+            }
+          }
+        } catch {}
       } else if (event.action === 'remove') {
         if (isBotUpdate) {
           if (g_info?.contador.status) await grupoController.removeCountGroup(event.id);

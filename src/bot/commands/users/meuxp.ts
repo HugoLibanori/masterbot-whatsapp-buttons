@@ -7,10 +7,10 @@ import * as userController from '../../controllers/UserController.js';
 import { xpRules } from '../../../configs/xp/xpRules.js';
 
 const command: Command = {
-  name: 'xp',
+  name: 'meuxp',
   description: 'Mostra seu XP total, XP dos últimos 30 dias e seu tier atual.',
   category: 'users',
-  aliases: ['xp', 'perfil', 'rank'],
+  aliases: ['meuxp', 'perfil', 'rank'],
   group: false,
   admin: false,
   owner: false,
@@ -24,6 +24,12 @@ const command: Command = {
     textMessage,
   ): Promise<CommandReturn> => {
     const { id_chat, sender, pushName } = messageContent;
+    if (!dataBot.xp?.status) {
+      return await sock.sendText(
+        id_chat,
+        `❌ ${pushName || 'Você'}, o sistema de XP está desativado no momento.`,
+      );
+    }
     if (!sender) return;
 
     await XPService.init(); // garante tabela

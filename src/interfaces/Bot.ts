@@ -53,6 +53,7 @@ export interface Bot {
     };
   };
   openai: { status: boolean };
+  xp: { status: boolean };
 }
 interface UsuarioComando {
   usuario_id: string;

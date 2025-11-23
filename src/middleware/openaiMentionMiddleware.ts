@@ -40,7 +40,7 @@ export async function openaiMentionMiddleware(
       if (!grupoVerificado) return false;
     }
 
-    if (await checkCommandExists(dataBot, command)) return true;
+    if ((await checkCommandExists(dataBot, command)).exists) return true;
 
     if (!isGroup || !dataGroup?.openai?.status || !textFull) return true;
 

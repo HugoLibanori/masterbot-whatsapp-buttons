@@ -15,13 +15,16 @@ import { typeMessages } from './contentMessage.js';
 import { BotData } from '../../configs/configBot/BotData.js';
 import * as userController from '../controllers/UserController.js';
 import { verificarCooldown } from '../../utils/cooldownUtils.js';
-// XP adicionado de forma assíncrona e dinâmica para não travar o fluxo
+import { XPEventType } from '../../configs/xp/xpRules.js';
 
 export const checkingMessage = async (
   sock: ISocket,
   message: types.MyWAMessage,
   messageContent: MessageContent,
 ) => {
+  // ------------------------------
+  // 1. Desestruturação inicial
+  // ------------------------------
   const {
     id_chat,
     command,
@@ -36,31 +39,46 @@ export const checkingMessage = async (
     sender,
   } = messageContent;
 
+  // ------------------------------
+  // 2. Carrega dados do bot
+  // ------------------------------
   const dataBot: Partial<Bot> = BotData.get() || {};
-
   if (!dataBot.prefix) return;
 
   const prefix = dataBot.prefix;
+
+  // ------------------------------
+  // 3. Checa existência do comando
+  // ------------------------------
   const commandExists = await checkCommandExists(dataBot, command);
 
-  const autostickerpv =
-    !isGroup && (type === typeMessages.IMAGE || type === typeMessages.VIDEO) && dataBot.autosticker;
+  // ------------------------------
+  // 4. Pré-validação de autosticker
+  // ------------------------------
+  const isMedia = type === typeMessages.IMAGE || type === typeMessages.VIDEO;
 
-  const autostickergp =
-    isGroup && (type === typeMessages.IMAGE || type === typeMessages.VIDEO) && autosticker;
+  const autostickerpv = !isGroup && isMedia && dataBot.autosticker;
 
-  if (commandExists || commandExists === 'protegido') {
+  const autostickergp = isGroup && isMedia && autosticker;
+
+  // ======================================================
+  // =============== 5. SE O COMANDO EXISTE ===============
+  // ======================================================
+  if (commandExists.exists) {
+    // Prefixo errado → sai
     if (!command.startsWith(prefix)) return;
 
+    // Normaliza comando removendo prefixo
     const commandName = command.toLowerCase().replace(new RegExp('^' + escapeRegex(prefix)), '');
+
+    // Procura comando nos aliases
     const cmd = Array.from(commands.values()).find((c) => c.aliases.includes(commandName));
     if (!cmd) return;
 
     const permission = await checkPermission(sock, message, cmd, messageContent, dataBot);
     if (!permission) return;
 
-    // Se pediu "guia"
-    const msgGuide = !args?.length ? false : args[0].toLocaleLowerCase() === 'guia';
+    const msgGuide = args?.[0]?.toLowerCase() === 'guia';
     if (msgGuide) {
       const guide = await commandGuide(sock, dataBot, commandName, cmd);
       await sock.sendText(id_chat, guide);
@@ -72,7 +90,6 @@ export const checkingMessage = async (
       const tipo = userData?.tipo || 'comum';
 
       const permitido = await verificarCooldown(sock, sender, tipo, pushName!, id_chat);
-
       if (!permitido) return;
     }
 
@@ -80,30 +97,49 @@ export const checkingMessage = async (
 
     await runCommand(cmd, sock, message, messageContent, args ?? [], dataBot);
 
-    if (sender) {
-      setImmediate(async () => {
-        try {
-          const { XPService } = await import('../../services/XPService.js');
-          const res: any = await XPService.addEvent(sender, 'interaction');
-          if (res?.changed && id_chat) {
-            const { xpRules } = await import('../../configs/xp/xpRules.js');
-            const order = xpRules.tiers.map((t) => t.name);
-            const idxOld = order.indexOf(res.oldTier);
-            const idxNew = order.indexOf(res.newTier);
-            const up = idxNew > idxOld;
-            const arrow = up ? '⬆️' : '⬇️';
-            const msg = up
-              ? `Parabéns @${sender.replace('@s.whatsapp.net', '')}! Você subiu para ${String(res.newTier).toUpperCase()}!`
-              : `Atenção @${sender.replace('@s.whatsapp.net', '')}, seu tier mudou para ${String(res.newTier).toUpperCase()}.`;
-            await sock.sendTextWithMentions(id_chat, `${arrow} ${msg}`, [sender]);
-          }
-        } catch {}
-      });
+    if (sender && dataBot.xp?.status) {
+      await addXpForInteraction(sender, id_chat, sock);
     }
+
     return;
-  } else {
-    if (autostickerpv || autostickergp) {
-      return await autoSticker(sock, message, messageContent, dataBot);
+  }
+
+  // Autosticker fora de comandos
+  if (autostickerpv || autostickergp) {
+    if (sender && dataBot.xp?.status) {
+      await addXpForInteraction(sender, id_chat, sock, 'sticker_create');
     }
+    return await autoSticker(sock, message, messageContent, dataBot);
   }
 };
+
+async function addXpForInteraction(
+  sender: string,
+  id_chat: string | undefined,
+  sock: ISocket,
+  event: string = 'interaction',
+) {
+  setImmediate(async () => {
+    try {
+      const { XPService } = await import('../../services/XPService.js');
+      const res: any = await XPService.addEvent(sender, event as XPEventType);
+
+      if (res?.changed && id_chat) {
+        const { xpRules } = await import('../../configs/xp/xpRules.js');
+
+        const order = xpRules.tiers.map((t) => t.name);
+        const idxOld = order.indexOf(res.oldTier);
+        const idxNew = order.indexOf(res.newTier);
+
+        const up = idxNew > idxOld;
+        const arrow = up ? '⬆️' : '⬇️';
+
+        const msg = up
+          ? `Parabéns @${sender.replace('@s.whatsapp.net', '')}! Você subiu para ${String(res.newTier).toUpperCase()}!`
+          : `Atenção @${sender.replace('@s.whatsapp.net', '')}, seu tier mudou para ${String(res.newTier).toUpperCase()}.`;
+
+        await sock.sendTextWithMentions(id_chat, `${arrow} ${msg}`, [sender]);
+      }
+    } catch {}
+  });
+}

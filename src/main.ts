@@ -136,7 +136,6 @@ const connectWhatsapp = async () => {
 
     if (events['group-participants.update']) {
       const event = events['group-participants.update'];
-      console.log('Atualização de participantes do grupo:', event);
       if (!fullBoot || !botInfo) return;
 
       const groupInfo = groupCache

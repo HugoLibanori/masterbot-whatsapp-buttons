@@ -26,6 +26,7 @@ const command: Command = {
       id_chat,
       grupo: { dataBd },
     } = messageContent;
+
     const newState = !dataBd.openai.status;
     await grupoController.changeOpenAI(id_chat, newState);
 

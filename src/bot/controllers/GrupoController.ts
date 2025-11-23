@@ -419,8 +419,8 @@ export const blockCommands = async (
       respText += createText(textCommands.grupo.bcmd.msgs.resposta_variavel.enviado_erro, comando);
       continue;
     }
-    const exists = checkCommandExists(dataBot, comando);
-    if (!exists) {
+    const exists = await checkCommandExists(dataBot, comando);
+    if (!exists.exists) {
       respText += createText(textCommands.grupo.bcmd.msgs.resposta_variavel.nao_existe, comando);
     } else {
       if (existingCommands.includes(comando)) {
@@ -428,7 +428,7 @@ export const blockCommands = async (
           textCommands.grupo.bcmd.msgs.resposta_variavel.ja_bloqueado,
           comando,
         );
-      } else if (comando.includes('menu') || typeof exists === 'string') {
+      } else if (comando.includes('menu') || exists.admin || exists.owner) {
         respText += createText(textCommands.grupo.bcmd.msgs.resposta_variavel.erro, comando);
       } else {
         respText += createText(
