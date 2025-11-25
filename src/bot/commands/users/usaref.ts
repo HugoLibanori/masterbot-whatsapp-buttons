@@ -5,13 +5,14 @@ import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
 import Users from '../../../database/models/User.js';
 import { connection } from '../../../database/index.js';
 import { XPService } from '../../../services/XPService.js';
+import { commandErrorMsg } from '../../../utils/utils.js';
 
 const command: Command = {
   name: 'usaref',
   description: 'Usa um código de convite para dar XP ao convidador.',
   category: 'users',
   aliases: ['usaref', 'usarref', 'refusar'],
-  group: false,
+  group: true,
   admin: false,
   owner: false,
   isBotAdmin: false,
@@ -23,7 +24,14 @@ const command: Command = {
     dataBot: Partial<Bot>,
     textMessage,
   ): Promise<CommandReturn> => {
-    const { id_chat, sender, pushName } = messageContent;
+    const { id_chat, sender, pushName, command, isGroup } = messageContent;
+    if (isGroup && id_chat !== dataBot.grupo_oficial) {
+      return await sock.sendText(
+        id_chat,
+        `❌ ${pushName || 'Você'}, este comando só pode ser usado no grupo oficial.\n\nDigite: *${dataBot.prefix || '!'}*grupooficial para receber o link do grupo.`,
+      );
+    }
+
     if (!dataBot.xp?.status) {
       return await sock.sendText(
         id_chat,
@@ -33,7 +41,7 @@ const command: Command = {
     if (!sender) return;
 
     if (!args.length) {
-      await sock.sendText(id_chat, `Uso: ${dataBot.prefix || '!'}usaref <codigo>`);
+      await sock.sendText(id_chat, commandErrorMsg(command));
       return;
     }
 

@@ -33,13 +33,13 @@ const command: Command = {
 
     const texto = [
       `👤 ${pushName || 'Você'}`,
-      `Seu código de convite: ${code}`,
+      `Seu código de convite: \`${code}\``,
       '',
       `Compartilhe com amigos. Quando eles usarem:`,
       `- Você ganha XP turbinado`,
       `- Eles entram já prontos para usar o bot`,
       '',
-      `Para usar o código: ${dataBot.prefix || '!'}usaref ${code}`,
+      `Para usar o código digite: ${dataBot.prefix || '!'}usaref ${code}`,
     ].join('\n');
 
     await sock.sendText(id_chat, texto);
