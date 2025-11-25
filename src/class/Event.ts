@@ -153,6 +153,10 @@ export class Event {
         // Banco
         await grupoController.removeParticipant(participantId, event.id);
 
+        try {
+          await XPService.removeUser(participantId);
+        } catch {}
+
         // Cache
         if (groupInCache) {
           groupInCache.participants = groupInCache.participants.filter(

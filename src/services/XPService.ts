@@ -52,15 +52,16 @@ export class XPService {
         where: { user_id: userId, type },
         order: [['created_at', 'DESC']],
       });
+
       if (recent) {
         const diff = Date.now() - new Date(recent.get('created_at') as Date).getTime();
         if (diff < cooldown * 1000) {
-          return;
+          return { changed: false };
         }
       }
     }
 
-    // Per-hour cap
+    // Per-hour cap check
     const perHourCap = xpRules.caps[type]?.perHour;
     if (perHourCap) {
       const oneHourAgo = new Date(Date.now() - 3600_000);
@@ -70,13 +71,34 @@ export class XPService {
           attributes: [[connection.fn('SUM', connection.col('amount')), 'sum']],
           raw: true,
         })) || ({ sum: 0 } as any);
-      const current = Number(sum ?? 0);
-      if (current >= perHourCap) return;
+
+      if (Number(sum ?? 0) >= perHourCap) {
+        return { changed: false };
+      }
     }
 
     const oldTier = user.tipo;
 
-    await XpEvent.create({ user_id: userId, type, amount, meta });
+    const existing = await XpEvent.findOne({
+      where: { user_id: userId, type },
+    });
+
+    if (existing) {
+      // Atualiza o único registro existente
+      await existing.update({
+        amount: existing.amount + amount,
+        meta: meta || existing.meta,
+        created_at: new Date(),
+      });
+    } else {
+      // Cria somente se NÃO existir
+      await XpEvent.create({
+        user_id: userId,
+        type,
+        amount,
+        meta,
+      });
+    }
 
     const changed = await this.recalculateTier(userId);
 
@@ -135,5 +157,9 @@ export class XPService {
       return true;
     }
     return false;
+  }
+
+  static async removeUser(userId: string): Promise<void> {
+    await XpEvent.destroy({ where: { user_id: userId } });
   }
 }
