@@ -97,7 +97,7 @@ export const checkingMessage = async (
 
     await runCommand(cmd, sock, message, messageContent, args ?? [], dataBot);
 
-    if (sender && dataBot.xp?.status) {
+    if (sender && dataBot.xp?.status && commandName !== 's') {
       await addXpForInteraction(sender, id_chat, sock);
     }
 

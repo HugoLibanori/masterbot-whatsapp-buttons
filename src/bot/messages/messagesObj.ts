@@ -421,7 +421,7 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
       },
       usaref: {
         descricao: '',
-        guia: `Ex: *${prefixo}usaref* codigo - Usa um código de convite e dá XP ao convidador.\n`,
+        guia: `Ex: *${prefixo}usaref* codigo - Usa um código de convite e dá XP ao convidador.\n\nObs: só funciona se você usar no grupo ofocial do bot.\n\nDigite: *${prefixo}grupooficial* para ver o link do grupo.`,
         msgs: {
           ja_ativado: 'Este número já ativou um código anteriormente.',
           sucesso: 'Código aplicado com sucesso! O convidador recebeu o XP.',
