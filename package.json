@@ -37,6 +37,7 @@
     "@google-cloud/vision": "^5.3.1",
     "@hapi/boom": "^10.0.1",
     "@itsukichan/baileys": "npm:@innovatorssoft/baileys",
+    "@vreden/youtube_scraper": "^1.2.8",
     "axios": "^1.13.2",
     "canvas": "^3.1.2",
     "chalk": "^5.6.2",

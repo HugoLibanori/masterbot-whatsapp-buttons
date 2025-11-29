@@ -4,6 +4,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import { PassThrough } from 'stream';
 import fs from 'fs-extra';
 import axios from 'axios';
+import yt from '@vreden/youtube_scraper';
 
 import { convertSecondsToMinutes, getPathTemp } from '../../utils/utils.js';
 import { Bot } from 'interfaces/Bot.js';
@@ -417,17 +418,17 @@ export const obterYTMP4 = async (
   erro?: boolean;
 }> => {
   try {
-    const { data } = await axios.get('http://localhost:8000/download-mp4', {
-      params: { url },
-    });
+    const data = await yt.ytmp4(url, 320);
+    console.log(data);
+    const buffer = await axios.get(data.download.url, { responseType: 'arraybuffer' });
 
     return {
       resultado: {
-        buffer: Buffer.from(data.buffer, 'base64'),
-        title: data.title,
-        durationFormatted: data.durationFormatted,
-        thumbnail: data.thumbnail,
-        isLiveContent: data.isLiveContent,
+        buffer: Buffer.from(buffer.data, 'base64'),
+        title: data.metadata.title,
+        durationFormatted: data.metadata.timestamp,
+        thumbnail: data.metadata.thumbnail,
+        isLiveContent: (data.metadata.seconds as number) > 900 ? true : false,
       },
     };
   } catch (err) {
@@ -530,17 +531,16 @@ export const getDataVideo = async (
   erro?: boolean;
 }> => {
   try {
-    const { data } = await axios.get('http://localhost:8000/download-mp3', {
-      params: { url },
-    });
+    const data = await yt.ytmp3(url, 320);
+    const buffer = await axios.get(data.download.url, { responseType: 'arraybuffer' });
 
     return {
       resultado: {
-        buffer: Buffer.from(data.buffer, 'base64'),
-        title: data.title,
-        durationFormatted: data.durationFormatted,
-        thumbnail: data.thumbnail,
-        isLiveContent: data.isLiveContent,
+        buffer: Buffer.from(buffer.data, 'base64'),
+        title: data.metadata.title,
+        durationFormatted: data.metadata.timestamp,
+        thumbnail: data.metadata.thumbnail,
+        isLiveContent: (data.metadata.seconds as number) > 900 ? true : false,
       },
     };
   } catch (error) {

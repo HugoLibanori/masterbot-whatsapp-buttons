@@ -32,19 +32,7 @@ export function commandInfo() {
             '💥 Advertências : *{p6}/3*\n',
         },
       },
-      reportar: {
-        descricao: '',
-        guia: `Ex: *${prefixo}reportar* mensagem - Reporta uma mensagem para a administração do Bot.\n`,
-        msgs: {
-          sucesso: `✅ Obrigado, seu problema foi reportado com sucesso e será analisado pelo dono.`,
-          erro: '[❗] Não foi possível enviar a mensagem para o dono, pois ele ainda não está cadastrado.',
-          resposta:
-            '[ 🤖 REPORTAR ⚙️]\n\n' +
-            '*Usuário* : {p1}\n' +
-            '*Contato* : http://wa.me/{p2}\n' +
-            '*Problema* : {p3}\n',
-        },
-      },
+
       meusdados: {
         descricao: '',
         guia: `Ex: *${prefixo}meusdados* - Exibe seus dados gerais como comandos, mensagens, tipo de usuário, etc.\n`,
@@ -57,20 +45,6 @@ export function commandInfo() {
           resposta_limite_diario:
             'Comandos usados hoje : *{p1}/{p2}*\n' + 'Limite diário : *{p3}*\n',
           resposta_grupo: 'Mensagens neste grupo : *{p1}* mensagens\n',
-        },
-      },
-      info: {
-        descricao: '',
-        guia: `Ex: *${prefixo}info* - Exibe as informações do bot, dono, etc.\n`,
-        msgs: {
-          resposta:
-            '*Criador do Bot* : {p1}\n' +
-            '*Nome do bot* : {p2}\n' +
-            '*Online desde* : {p3}\n' +
-            '*Comandos executados* : {p4}\n' +
-            '*Contato do criador* : wa.me/{p5}\n' +
-            '*Versão atual* : {p6}\n' +
-            '*GitHub* : https://github.com/HugoLibanori/masterbot-whatsapp-buttons\n',
         },
       },
     },
@@ -146,57 +120,7 @@ export function commandInfo() {
           espera: '[AGUARDE] 📸 O fundo da imagem está sendo removido.',
         },
       },
-      ouvir: {
-        descricao: '',
-        guia: `Ex: Responda um áudio com *${prefixo}ouvir* para transformar em texto.\n`,
-        msgs: {
-          erro_limite: '[❗] Houve um erro na transcrição, o áudio ultrapassa *1m30s*',
-          sucesso: '🔤 Transcrição de áudio :\n\n' + '-- {p1}',
-        },
-      },
-      audio: {
-        descricao: '',
-        guia:
-          `Responda um aúdio com um desses comandos :\n\n` +
-          `Ex: *${prefixo}audio* grave - Torna audio mais grave e lento\n\n` +
-          `Ex: *${prefixo}audio* agudo - Torna o audio mais agudo e rapido\n\n` +
-          `Ex: *${prefixo}audio* estourar - Deixa o audio estourado\n\n` +
-          `Ex: *${prefixo}audio* volume  - Aumenta o volume em 4 vezes\n\n` +
-          `Ex: *${prefixo}audio* x2 - Acelera o audio em 2 vezes\n\n` +
-          `Ex: *${prefixo}audio* reverso - Reverte o audio\n\n` +
-          `*Obs*: Este comando funciona apenas com *AUDIOS*.\n`,
-        msgs: {
-          erro_conversao: '[❗] Houve um erro na conversão de audio',
-        },
-      },
-      traduz: {
-        descricao: '',
-        guia:
-          `Ex: *${prefixo}traduz* pt texto - Traduz o texto que foi digitado para *Português*.\n\n` +
-          `Ex: *${prefixo}traduz* en texto - Traduz o texto que foi digitado para *Inglês*.\n\n` +
-          `Ex: Responda um *texto* com *${prefixo}traduz* pt - Traduz o resto respondido para *Português*.\n\n` +
-          `Ex: Responda um *texto* com *${prefixo}traduz* en - Traduz o resto respondido para *Inglês*.\n\n` +
-          `Idiomas suportados : \n` +
-          `- 🇧🇷 Português (pt)\n` +
-          `- 🇺🇸 Inglês (en)\n` +
-          `- 🇯🇵 Japonês (ja)\n` +
-          `- 🇮🇹 Italiano (it)\n` +
-          `- 🇪🇸 Espanhol (es)\n` +
-          `- 🇷🇺 Russo (ru)\n` +
-          `- 🇰🇷 Coreano (ko)\n`,
-        msgs: {
-          nao_suportado:
-            '[❗] Sem dados do idioma ou idioma não suportado. Atualmente suportamos :\n\n' +
-            `- 🇧🇷 Português - ${prefixo}traduz pt\n` +
-            `- 🇺🇸 Inglês - ${prefixo}traduz en\n` +
-            `- 🇯🇵 Japonês - ${prefixo}traduz ja\n` +
-            `- 🇮🇹 Italiano - ${prefixo}traduz it\n` +
-            `- 🇪🇸 Espanhol - ${prefixo}traduz es\n` +
-            `- 🇷🇺 Russo - ${prefixo}traduz ru\n` +
-            `- 🇰🇷 Coreano - ${prefixo}traduz ko\n`,
-          resposta: '🔠 *Resposta - Tradução* 🔠 :\n\n' + '*Texto*: {p1}\n\n' + '*Tradução* : {p2}',
-        },
-      },
+
       voz: {
         descricao: '',
         guia:
@@ -429,7 +353,7 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
       },
       topxp: {
         descricao: '',
-        guia: `Ex: *${prefixo}topxp* semanal|mensal|geral - Mostra o ranking de XP no período.\n`,
+        guia: `Ex: *${prefixo}topxp* [semanal|mensal|geral] [quantidade] - Mostra o ranking de XP no período e permite limitar o número de resultados.\nEx: *${prefixo}topxp* 5 - Mostra os 5 primeiros no ranking geral.\nEx: *${prefixo}topxp* mensal 10 - Mostra os 10 primeiros no ranking mensal.`,
         msgs: {},
       },
     },
@@ -512,14 +436,6 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
         },
       },
 
-      metalogo: {
-        descricao: '',
-        guia: `🤖 *[Comando: metalogo]*\n🧠 Sintaxe: *\`${prefixo}metalogo texto\`*\n📡 Descrição: Gera uma imagem com logo de metal usando o texto fornecido.\n> ⌬ Estabelecendo conexão com o servidor...\n`,
-        msgs: {
-          espera: '⏳ Em andamento , estou transformando seu texto em logo.',
-        },
-      },
-
       smeme: {
         descricao: '',
         guia: `🤖 *[Comando: smeme]*\n🧠 Sintaxe: *\`${prefixo}smeme textoCima, textoBaixo\`*\n📡 Descrição: Envie/responda uma imagem/vídeo com esse comando e textos para gerar um sticker estilo meme.\n> ⌬ Estabelecendo conexão com o servidor...\n`,
@@ -551,13 +467,6 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
     },
     //COMANDOS DIVERSÃO
     diversao: {
-      mascote: {
-        descricao: '',
-        guia: `Ex: *${prefixo}mascote* - Exibe o inigualável e onipotente WhatsApp Jr.\n`,
-        msgs: {
-          resposta: 'WhatsApp Jr.',
-        },
-      },
       simi: {
         descricao: '',
         guia: `🤖 *[Comando: simi]*\n🧠 Sintaxe: *\`${prefixo}simi texto\`*\n📡 Descrição: Sua pergunta será respondida pela SimSimi.\n> ⌬ Estabelecendo conexão com o servidor...\n`,
@@ -610,19 +519,7 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           resposta: '👩‍❤️‍👨 Está rolando um clima entre @{p1} e @{p2}',
         },
       },
-      caracoroa: {
-        descricao: '',
-        guia:
-          `Ex: *${prefixo}caracoroa* cara - Escolhe cara e joga a moeda.\n\n` +
-          `Ex: *${prefixo}caracoroa* coroa - Escolhe coroa e joga a moeda.\n`,
-        msgs: {
-          espera: '🕹️ Lançando a moeda 🪙',
-          resposta: {
-            vitoria: '🕹️ *VITÓRIA!* 🕹️\n\n' + 'O resultado caiu *{p1}*\n',
-            derrota: '🕹️ *DERROTA!* 🕹️\n\n' + 'O resultado caiu *{p1}*\n',
-          },
-        },
-      },
+
       tapa: {
         descricao: '',
         guia: `Ex: Responda ou @mencione um usuario com o comando *${prefixo}tapa* ele enviará um tapa em video.`,
@@ -705,27 +602,7 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           resposta: '👩‍❤️‍👨 PAR - @{p1} & @{p2}\n\n{p3}',
         },
       },
-      malacos: {
-        descricao: '',
-        guia: `Ex: *${prefixo}malacos* - Exibe o melhor time da Serie Z.\n`,
-        msgs: {
-          resposta: 'Somos o problema',
-        },
-      },
-      chance: {
-        descricao: '',
-        guia: `Ex: *${prefixo}chance de ficar rico* - Calcula sua chance de um tema aleatório a sua escolha.\n`,
-        msgs: {
-          resposta: '🧩 *CHANCE* - Você tem *{p1}%* de chance {p2}',
-        },
-      },
-      fch: {
-        descricao: '',
-        guia: `Ex: *${prefixo}fch* - Exibe uma frase aleatória montada com as cartas do jogo Cartas contra a Humanidade.\n`,
-        msgs: {
-          resposta: '🧩〘*FRASES CONTRA A HUMANIDADE*〙\n\n - {p1}',
-        },
-      },
+
       jogodavelha: {
         descricao: '',
         guia: `🤖 *[Comando: ${prefixo}jogodavelha]*\n🧠 Sintaxe:\n- *\`${prefixo}jogodavelha @adversário\`*\n🎮 Descrição: Inicia um jogo da velha com um usuário do grupo.`,

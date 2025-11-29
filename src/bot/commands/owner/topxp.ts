@@ -7,12 +7,13 @@ import Users from '../../../database/models/User.js';
 
 const command: Command = {
   name: 'topxp',
-  description: 'Mostra o ranking de XP (semanal, mensal ou geral).',
+  description:
+    'Mostra o ranking de XP (semanal, mensal ou geral) e permite limitar o número de resultados.',
   category: 'users',
   aliases: ['topxp', 'rankxp', 'leaderboard'],
   group: false,
   admin: false,
-  owner: false,
+  owner: true,
   isBotAdmin: false,
   exec: async (
     sock: ISocket,
@@ -30,7 +31,20 @@ const command: Command = {
       );
     }
 
-    const tipo = (args[0] || 'semanal').toLowerCase();
+    let tipo = 'geral'; // Define 'geral' como tipo padrão
+    let limit = 10; // Define o limite padrão como 10
+
+    if (args.length > 0) {
+      const firstArg = args[0].toLowerCase();
+      if (['semanal', 'mensal', 'geral'].includes(firstArg)) {
+        tipo = firstArg;
+        if (args[1] && !isNaN(parseInt(args[1]))) {
+          limit = parseInt(args[1]);
+        }
+      } else if (!isNaN(parseInt(firstArg))) {
+        limit = parseInt(firstArg);
+      }
+    }
 
     let where = '';
     if (tipo === 'semanal') {
@@ -38,7 +52,7 @@ const command: Command = {
     } else if (tipo === 'mensal') {
       where = `WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`;
     } else {
-      where = '';
+      where = ''; // para 'geral' ou quando não especificado
     }
 
     const sql = `
@@ -47,7 +61,7 @@ const command: Command = {
       ${where}
       GROUP BY user_id
       ORDER BY total DESC
-      LIMIT 10
+      LIMIT ${limit}
     `;
 
     const [rows] = (await connection.query(sql)) as any[];
@@ -60,7 +74,7 @@ const command: Command = {
     const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '▫️');
 
     const mentions: string[] = [];
-    let texto = `🏆 TOP XP (${tipo.toUpperCase()})\n\n`;
+    let texto = `🏆 TOP XP (${tipo.toUpperCase()}) - ${limit} Usuários\n\n`;
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
