@@ -33,25 +33,50 @@ const command: Command = {
       command,
       grupo: { participants },
     } = messageContent;
-    const { seconds } = { ...media };
+    const mediaSeconds = quotedMsg ? contentQuotedMsg?.seconds : media?.seconds;
 
     let dataMsg = {
       type: quotedMsg ? contentQuotedMsg?.type : type,
       message: quotedMsg ? contentQuotedMsg?.message : message,
-      seconds: quotedMsg ? contentQuotedMsg?.seconds : seconds,
+      seconds: mediaSeconds,
     };
 
     if (
       dataMsg.type !== typeMessages.IMAGE &&
       dataMsg.type !== typeMessages.VIDEO &&
-      dataMsg.type !== typeMessages.STICKER
+      dataMsg.type !== typeMessages.STICKER &&
+      dataMsg.type !== typeMessages.TEXT &&
+      dataMsg.type !== typeMessages.AUDIO
     ) {
       return await sock.sendText(id_chat, commandErrorMsg(command));
     }
 
-    const bufferMidia = await downloadMediaMessage(dataMsg.message, 'buffer', {});
+    if (dataMsg.type === typeMessages.TEXT) {
+      await sock.sendTextWithMentions(
+        id_chat,
+        dataMsg.message.message.extendedTextMessage.text,
+        participants,
+      );
+    } else {
+      const bufferMidia = await downloadMediaMessage(dataMsg.message, 'buffer', {});
+      const captionToSend = quotedMsg
+        ? contentQuotedMsg?.caption
+        : dataMsg.message.message.imageMessage?.caption ||
+          dataMsg.message.message.videoMessage?.caption ||
+          '';
 
-    await sock.sendFileBufferWithMentions(dataMsg.type, id_chat, bufferMidia, participants);
+      if (dataMsg.type === typeMessages.AUDIO) {
+        await sock.sendAudioWithMentions(id_chat, bufferMidia, participants);
+      } else {
+        await sock.sendFileBufferWithMentionsForward(id_chat, dataMsg.message, participants);
+      }
+    }
+
+    if (quotedMsg) {
+      await sock.deleteMessage(id_chat, message, true);
+    } else {
+      await sock.deleteMessage(id_chat, message);
+    }
   },
 };
 

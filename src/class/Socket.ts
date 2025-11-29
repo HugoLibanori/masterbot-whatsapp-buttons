@@ -266,8 +266,17 @@ export class Socket implements ISocket {
     id_chat: string,
     buffer: Buffer,
     mentions: string[],
+    caption?: string,
   ): Promise<types.MyWAMessage | undefined> {
     return await SocketFns.sendFileBufferWithMentions(this.sock, tipo, id_chat, buffer, mentions);
+  }
+
+  async sendAudioWithMentions(
+    id_chat: string,
+    buffer: Buffer,
+    mentions: string[],
+  ): Promise<types.MyWAMessage | undefined> {
+    return await SocketFns.sendAudioWithMentions(this.sock, id_chat, buffer, mentions);
   }
 
   async promoteParticipant(
@@ -335,5 +344,13 @@ export class Socket implements ISocket {
 
   async sendButtonPix(id_chat: string, options: types.MyButtonPix): Promise<types.MyWAMessage> {
     return await SocketFns.sendButtonPix(this.sock, id_chat, options);
+  }
+
+  async sendFileBufferWithMentionsForward(
+    id_chat: string,
+    message: types.MyWAMessage,
+    mentions: string[],
+  ): Promise<types.MyWAMessage | undefined> {
+    return await SocketFns.sendFileBufferWithMentionsForward(this.sock, id_chat, message, mentions);
   }
 }

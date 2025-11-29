@@ -163,6 +163,19 @@ export interface ISocket {
     id_chat: string,
     buffer: Buffer,
     mentions: string[],
+    caption?: string,
+  ): Promise<types.MyWAMessage | undefined>;
+
+  sendAudioWithMentions(
+    id_chat: string,
+    buffer: Buffer,
+    mentions: string[],
+  ): Promise<types.MyWAMessage | undefined>;
+
+  sendFileBufferWithMentionsForward(
+    id_chat: string,
+    message: types.MyWAMessage,
+    mentions: string[],
   ): Promise<types.MyWAMessage | undefined>;
 
   promoteParticipant(
