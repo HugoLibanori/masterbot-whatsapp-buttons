@@ -14,6 +14,7 @@ import { handleAllButtons } from './handleAllButtons.js';
 export const handleMessageUpsert = async (sock: ISocket, messages: types.MyWAMessage) => {
   const msg = messages;
   if (msg.key.fromMe) return;
+  console.log('📩 New message received', msg);
 
   const dataBot = BotData.get() || {};
   const messageContent = await contentMessage(await sock.getInstance(), msg);

@@ -41,13 +41,21 @@ const contentMessage = async (
     const type = getContentType(msg);
     const numberBot = sock.user?.lid?.replace(/:\d+/, '');
     const numberOwner = await userController.getOwner();
-    const idSender =
-      [message?.key?.remoteJidAlt, message?.key?.remoteJid]?.find((jid) =>
-        jid?.includes('@s.whatsapp.net'),
-      ) || '';
-    const idSenderLid =
-      [message?.key?.remoteJidAlt, message?.key?.remoteJid]?.find((jid) => jid?.includes('@lid')) ||
-      '';
+    // const idSenderGroup =
+    //   [message?.key?.participantAlt, message?.key?.participant]?.find((jid) =>
+    //     jid?.includes('@s.whatsapp.net'),
+    //   ) || '';
+    // const idSenderLidGroup =
+    //   [message?.key?.participantAlt, message?.key?.participant]?.find((jid) =>
+    //     jid?.includes('@lid'),
+    //   ) || '';
+    // const idSenderPv =
+    //   [message?.key?.remoteJidAlt, message?.key?.remoteJid]?.find((jid) =>
+    //     jid?.includes('@s.whatsapp.net'),
+    //   ) || '';
+    // const idSenderLidPv =
+    //   [message?.key?.remoteJidAlt, message?.key?.remoteJid]?.find((jid) => jid?.includes('@lid')) ||
+    //   '';
 
     const messageKey = type as keyof types.MyWAMessageContent;
     const content = msg?.[messageKey] as
@@ -61,13 +69,23 @@ const contentMessage = async (
       content?.caption || msg?.conversation || msg?.extendedTextMessage?.text || '',
     );
 
-    const id_chat = message?.key?.remoteJid?.includes('@g.us')
-      ? message.key?.remoteJid?.replace(/:\d+/, '')
-      : message.key?.remoteJidAlt?.replace(/:\d+/, '');
+    let id_chat = '';
+
+    if (message?.key?.remoteJid?.includes('@g.us')) {
+      id_chat = message.key?.remoteJid?.replace(/:\d+/, '') ?? '';
+    } else {
+      id_chat =
+        message.key?.remoteJid?.replace(/:\d+/, '') ??
+        message.key?.remoteJidAlt?.replace(/:\d+/, '') ??
+        '';
+    }
 
     const id_group = message.key?.remoteJid?.includes('@g.us') ? message.key?.remoteJid : null;
 
     messageContent.id_chat = id_chat;
+    if (!id_chat) {
+      console.warn('[WARN] id_chat ficou vazio! message:', message);
+    }
     messageContent.isGroup = id_chat?.includes('@g.us') ?? false;
     messageContent.numberBot = numberBot ?? '';
 
@@ -80,12 +98,8 @@ const contentMessage = async (
           messageContent.textFull?.split(' ')?.slice(1)?.join(' ')?.trim()) ??
         '';
       messageContent.pushName = message.pushName;
-      messageContent.sender = messageContent.isGroup
-        ? message.key?.participantAlt?.replace(/:\d+/, '')
-        : idSender.replace(/:\d+/, '');
-      messageContent.senderLid = messageContent.isGroup
-        ? message.key?.participant?.replace(/:\d+/, '')
-        : idSenderLid.replace(/:\d+/, '');
+      messageContent.sender = getJidBySuffix(message.key, '@s.whatsapp.net');
+      messageContent.senderLid = getJidBySuffix(message.key, '@lid');
       messageContent.isOwnerBot = messageContent.sender === numberOwner;
       messageContent.command =
         (msg?.buttonsResponseMessage?.selectedDisplayText || '')
@@ -212,14 +226,14 @@ const contentMessage = async (
               quotedMessage.documentMessage)
           ) {
             generatedMessage = generateWAMessageFromContent(quotedMsgId, quotedMessage, {
-              userJid: messageContent.sender!,
+              userJid: messageContent.sender,
             });
           } else if (typeof bodyText === 'string') {
             generatedMessage = generateWAMessageFromContent(
               quotedMsgId,
               { extendedTextMessage: { text: bodyText } },
               {
-                userJid: messageContent.sender!,
+                userJid: messageContent.sender,
               },
             );
           }
@@ -280,3 +294,12 @@ export const typeMessages: TypeMessages = {
   STICKER: 'stickerMessage',
   AUDIO: 'audioMessage',
 };
+
+function getJidBySuffix(key: any, suffix: string) {
+  return (
+    [key?.participant, key?.participantAlt, key?.remoteJid, key?.remoteJidAlt]
+      .filter(Boolean)
+      .map((jid) => jid.replace(/:\d+/, ''))
+      .find((j) => j.endsWith(suffix)) || null
+  );
+}

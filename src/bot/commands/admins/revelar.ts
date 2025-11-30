@@ -3,7 +3,7 @@ import * as types from '../../../types/BaileysTypes/index.js';
 import { ISocket } from '../../../types/MyTypes/index.js';
 import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg } from '../../../utils/utils.js';
-import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
+import { MessageContent, Command } from '../../../interfaces/index.js';
 
 const command: Command = {
   name: 'revelar',
@@ -18,9 +18,6 @@ const command: Command = {
     sock: ISocket,
     message: types.MyWAMessage,
     messageContent: MessageContent,
-    args: string[],
-    dataBot: Partial<Bot>,
-    textMessage,
   ): Promise<CommandReturn> => {
     const { id_chat, quotedMsg, contentQuotedMsg, command } = messageContent;
 

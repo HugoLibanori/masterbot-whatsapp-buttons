@@ -6,5 +6,5 @@ export async function relayMessage(
   id_chat: string,
   message: types.MyWAMessageContent,
 ) {
-  await schedule(() => sock.relayMessage(id_chat, message, {}));
+  await schedule(() => sock.relayMessage(id_chat, message, { messageId: id_chat }));
 }
