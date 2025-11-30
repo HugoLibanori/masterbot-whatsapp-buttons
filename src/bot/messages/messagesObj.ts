@@ -494,13 +494,6 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           resposta: '🧩 *VIADÔMETRO* - {p1}',
         },
       },
-      detector: {
-        descricao: '',
-        guia: `🤖 *[Comando: ${prefixo}detector]*\n🧠 Sintaxe: *\`${prefixo}detector\`*\n📡 Descrição: Exibe o resultado da máquina da verdade.\n> ⌬ Calibrando a máquina da verdade...\n`,
-        msgs: {
-          espera: '⏳ Calibrando a máquina da verdade',
-        },
-      },
       roletarussa: {
         descricao: '',
         guia: `🤖 *[Comando: ${prefixo}roletarussa]*\n🧠 Sintaxe: *\`${prefixo}roletarussa\`*\n📡 Descrição: Bane aleatoriamente um membro do grupo. (admins)\n> ⌬ Girando o tambor da sorte...\n*Obs*: Comando apenas para administradores, pode banir qualquer um exceto o dono do grupo e o BOT.\n`,
@@ -529,21 +522,6 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           dono: '[❗] *ATENÇÃO* - O dono do bot não pode ser tapado! 😏',
         },
       },
-      ppt: {
-        descricao: '',
-        guia:
-          `Ex: *${prefixo}ppt* pedra - Escolhe pedra, para jogar pedra, papel ou tesoura.\n\n` +
-          `Ex: *${prefixo}ppt* papel - Escolhe papel, para jogar pedra, papel ou tesoura.\n\n` +
-          `Ex: *${prefixo}ppt* tesoura - Escolhe tesoura, para jogar pedra, papel ou tesoura.\n`,
-        msgs: {
-          opcao_erro: '[❗] Você deve escolher entre *pedra*, *papel*  ou *tesoura*',
-          resposta: {
-            vitoria: '🕹️ *VITÓRIA!* 🕹️\n\n' + 'Você escolheu {p1} e o bot escolheu {p2}\n',
-            derrota: '🕹️ *DERROTA!* 🕹️\n\n' + 'Você escolheu {p1} e o bot escolheu {p2}\n',
-            empate: '🕹️ *EMPATE!* 🕹️\n\n' + 'Você escolheu {p1} e o bot escolheu {p2}\n',
-          },
-        },
-      },
       gadometro: {
         descricao: '',
         guia: `📟 *[Comando: ${prefixo}gadometro]*\n🧠 Sintaxe:\n- *\`${prefixo}gadometro @membro\`*\n- Responder com *\`${prefixo}gadometro\`*\n📡 Descrição: Mede o nível de gadisse do membro mencionado ou respondido.\n> 🧐 Será que é um gadinho ou um gadão?`,
@@ -558,24 +536,6 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           ],
           apenas_um: '[❗] Erro: Apenas um membro por vez deve ser mencionado.',
           resposta: '🧩 *GADÔMETRO* - {p1}',
-        },
-      },
-      bafometro: {
-        descricao: '',
-        guia:
-          `Ex: *${prefixo}bafometro* @membro - Mede o nível de alcool do membro mencionado.\n\n` +
-          `Ex: Responder com *${prefixo}bafometro* - Mede o nível de alcool do membro respondido.\n`,
-        msgs: {
-          respostas: [
-            ' 0%\n\n - ESTÁ SÓBRIO ',
-            '🍺  20% \n\n - TOMOU UM GORÓZINHO ',
-            '🍺🍺  40%\n\n - JÁ TÁ FICANDO MEIO CHAPADO E FALANDO BOSTA',
-            '🍺🍺🍺  60%\n\n - TÁ MAMADO E COMEÇANDO A FAZER MERDA',
-            '🍺🍺🍺🍺  80%\n\n - TÁ LOUCÃO NEM CONSEGUE DIFERENCIAR MULHER E HOMEM',
-            '🍺🍺🍺🍺🍺  100%\n\n - ALERTA: ESTÁ FORA DE SI , BEIJANDO MENDIGO E CACHORRO DE RUA',
-          ],
-          apenas_um: '[❗] Erro: Apenas um membro por vez deve ser mencionado.',
-          resposta: '🧩 *BAFÔMETRO* - {p1}',
         },
       },
       top5: {
@@ -1299,28 +1259,6 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           bc_sucesso: '🤖✅ Anúncio feito com sucesso.',
         },
       },
-      bccontatos: {
-        descricao: '',
-        guia: `Ex: *${prefixo}bccontatos* mensagem - Envia uma mensagem para todos os *CONTATOS*.\n`,
-        msgs: {
-          anuncio: `[🤖${nome_bot}® - Mensagem para os contatos]\n\n` + '{p1}',
-          espera:
-            '⏳ Em andamento , estou enviando sua mensagem para {p1} contatos.\n\n' +
-            'Tempo estimado : *{p2}* segundos',
-          bc_sucesso: '🤖✅ Anúncio feito com sucesso.',
-        },
-      },
-      bctodos: {
-        descricao: '',
-        guia: `Ex: *${prefixo}bctodos* mensagem - Envia uma mensagem para todos os *GRUPOS e CONTATOS*.\n`,
-        msgs: {
-          anuncio: `[🤖${nome_bot}® - Mensagem para os contatos]\n\n` + '{p1}',
-          espera:
-            '⏳ Em andamento , estou enviando sua mensagem para {p1} contato(s) e {p2} grupo(s)\n\n' +
-            'Tempo estimado : *{p3}* segundos',
-          bc_sucesso: '🤖✅ Anúncio feito com sucesso.',
-        },
-      },
       fotobot: {
         descricao: '',
         guia: `🖼️ *[Comando: ${prefixo}fotobot]*\n🧠 Sintaxe:\n- Envie/responda uma *imagem* com *\`${prefixo}fotobot\`* - Altera a foto do BOT.\n\n📡 Descrição: Permite alterar a foto do bot com a imagem enviada ou respondida.\n> ⌬ Estabelecendo conexão com o servidor...`,
@@ -1511,16 +1449,6 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
         msgs: {
           ja_desbloqueado: '[❗] O Usuário +{p1} já está *desbloqueado*.',
           sucesso: '✅ O Usuário +{p1} foi *desbloqueado* com sucesso',
-        },
-      },
-      estado: {
-        descricao: '',
-        guia:
-          `Ex: *${prefixo}estado* online - Muda o status do bot para ONLINE.\n\n` +
-          `Ex: *${prefixo}estado* offline - Muda o status do bot para OFFLINE.\n\n` +
-          `Ex: *${prefixo}estado* manutencao - Muda o status do bot para MANUTENCÃO.\n`,
-        msgs: {
-          sucesso: '🤖✅ Seu estado foi alterado com sucesso.',
         },
       },
       admin: {
