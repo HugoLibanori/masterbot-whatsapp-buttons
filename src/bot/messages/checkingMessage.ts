@@ -134,15 +134,25 @@ export const checkingMessage = async (
           if (!permitidoAutoReply) return;
         }
 
-        await runCommand(menuCmd, sock, message, messageContent, [], dataBot);
-        if (sender && dataBot.xp?.status) await addXpForInteraction(sender, id_chat, sock);
+        // Segurança: se id_chat estiver vazio / inválido, não executar o comando —
+        // evitar chamar sendMessage com JID inválido que causa jidDecode undefined
+        if (!id_chat) {
+          console.warn('[auto-reply] pulando menu auto-reply porque id_chat está vazio', {
+            sender,
+            messageKey: message?.key,
+          });
+        } else {
+          await runCommand(menuCmd, sock, message, messageContent, [], dataBot);
+          if (sender && dataBot.xp?.status) await addXpForInteraction(sender, id_chat, sock);
 
-        // persiste o instante do auto-reply no BD para sobreviver a reinícios
-        if (sender) {
-          try {
-            await userController.setLastAutoReplyAt(sender, new Date());
-          } catch {}
+          // persiste o instante do auto-reply no BD para sobreviver a reinícios
+          if (sender) {
+            try {
+              await userController.setLastAutoReplyAt(sender, new Date());
+            } catch {}
+          }
         }
+        
       }
     }
   }
