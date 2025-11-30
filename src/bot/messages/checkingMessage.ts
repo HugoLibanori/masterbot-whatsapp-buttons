@@ -14,7 +14,7 @@ import { ISocket } from '../../types/MyTypes/index.js';
 import { typeMessages } from './contentMessage.js';
 import { BotData } from '../../configs/configBot/BotData.js';
 import * as userController from '../controllers/UserController.js';
-import { verificarCooldown } from '../../utils/cooldownUtils.js';
+import { verificarCooldown, verificarAutoReplyCooldown } from '../../utils/cooldownUtils.js';
 import { XPEventType } from '../../configs/xp/xpRules.js';
 
 export const checkingMessage = async (
@@ -89,7 +89,7 @@ export const checkingMessage = async (
       const userData = await userController.getUser(sender);
       const tipo = userData?.tipo || 'comum';
 
-      const permitido = await verificarCooldown(sock, sender, tipo, pushName!, id_chat);
+      const permitido = await verificarCooldown(sock, sender, tipo, pushName ?? '', id_chat!);
       if (!permitido) return;
     }
 
@@ -110,6 +110,41 @@ export const checkingMessage = async (
       await addXpForInteraction(sender, id_chat, sock, 'sticker_create');
     }
     return await autoSticker(sock, message, messageContent, dataBot);
+  }
+
+  // Auto-responder no PV: se não for comando e PV estiver liberado, enviar menu
+  if (!isGroup && dataBot.commands_pv) {
+    // se a mensagem começa com o prefixo e não é um comando existente, ignore (não auto-responder)
+    if (!command.startsWith(dataBot.prefix ?? '')) {
+      const menuCmd = Array.from(commands.values()).find((c) => c.name === 'menu');
+      if (menuCmd) {
+        // checa cooldown específico para auto-reply (configurável via dataBot.autoReplyCooldownSeconds em segundos)
+        if (sender) {
+          const autoReplySeconds = Number(dataBot.auto_reply_cooldown_seconds ?? 86400);
+
+          // consulta último auto-reply persistido no BD para não perder o estado entre reinícios
+          const last = await userController.getLastAutoReplyAt(sender);
+          if (last) {
+            const elapsed = Date.now() - new Date(last).getTime();
+            if (elapsed < autoReplySeconds * 1000) return;
+          }
+
+          // checa cache em memória para evitar I/O de DB para cada mensagem
+          const permitidoAutoReply = verificarAutoReplyCooldown(sender, autoReplySeconds);
+          if (!permitidoAutoReply) return;
+        }
+
+        await runCommand(menuCmd, sock, message, messageContent, [], dataBot);
+        if (sender && dataBot.xp?.status) await addXpForInteraction(sender, id_chat, sock);
+
+        // persiste o instante do auto-reply no BD para sobreviver a reinícios
+        if (sender) {
+          try {
+            await userController.setLastAutoReplyAt(sender, new Date());
+          } catch {}
+        }
+      }
+    }
   }
 };
 

@@ -68,6 +68,7 @@ export const registerBotData = async (sock?: ISocket) => {
           },
         },
         xp: { status: false },
+        auto_reply_cooldown_seconds: 86400,
       },
     });
 
@@ -115,7 +116,13 @@ export const getBotData = async (): Promise<Partial<Bot> | null> => {
     if (!bot) return null;
 
     const plain = bot.get({ plain: true });
-
+    // ensure legacy compatibility: if column name is snake_case in DB, Sequelize will return with that
+    if (
+      plain.auto_reply_cooldown_seconds === undefined &&
+      (plain as any).autoReplyCooldownSeconds !== undefined
+    ) {
+      plain.auto_reply_cooldown_seconds = (plain as any).autoReplyCooldownSeconds;
+    }
     return plain as Partial<Bot>;
   } catch (error) {
     console.error('Erro ao obter dados do bot:', error);

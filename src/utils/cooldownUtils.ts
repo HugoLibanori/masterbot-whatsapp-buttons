@@ -1,6 +1,7 @@
 import { ISocket } from '../types/MyTypes/MySocket.js';
 
 export const globalCooldown = new Map<string, number>();
+export const globalAutoReplyCooldown = new Map<string, number>();
 
 export function resetCooldown(id: string) {
   globalCooldown.delete(id);
@@ -57,5 +58,22 @@ export async function verificarCooldown(
   }
 
   globalCooldown.set(sender, agora + cooldown * 1000);
+  return true;
+}
+
+/**
+ * Verifica cooldown específico para auto-replies no PV.
+ * Retorna true se permitido (e registra novo cooldown), false se ainda estiver no cooldown.
+ */
+export function verificarAutoReplyCooldown(sender: string, seconds = 3600): boolean {
+  if (!sender) return false;
+
+  if (seconds <= 0) return true; // disabled
+
+  const now = Date.now();
+  const prev = globalAutoReplyCooldown.get(sender);
+  if (prev && prev > now) return false;
+
+  globalAutoReplyCooldown.set(sender, now + seconds * 1000);
   return true;
 }

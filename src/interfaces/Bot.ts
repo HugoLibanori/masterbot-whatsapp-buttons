@@ -54,6 +54,7 @@ export interface Bot {
   };
   openai: { status: boolean };
   xp: { status: boolean };
+  auto_reply_cooldown_seconds?: number;
 }
 interface UsuarioComando {
   usuario_id: string;

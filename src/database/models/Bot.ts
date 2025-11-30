@@ -65,6 +65,7 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
     };
   };
   declare xp: { status: boolean };
+  declare auto_reply_cooldown_seconds?: number;
 
   static initial(sequelize: Sequelize) {
     Bot.init(
@@ -177,6 +178,11 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
           type: DataTypes.JSON,
           allowNull: false,
           defaultValue: { status: false },
+        },
+        auto_reply_cooldown_seconds: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          defaultValue: 86400,
         },
       },
       {

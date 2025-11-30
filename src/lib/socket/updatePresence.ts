@@ -13,7 +13,7 @@ export async function updatePresence(
 ): Promise<void> {
   const now = Date.now();
   const last = (lastPresence.get<number>(chatId) as number) ?? 0;
-  if (now - last < MIN_INTERVAL_MS) return;
+  if (now - last < MIN_INTERVAL_MS || !chatId) return; // Adicionei verificação de chatId
   lastPresence.set(chatId, now);
 
   await schedule(() => sock.sendPresenceUpdate(status, chatId));

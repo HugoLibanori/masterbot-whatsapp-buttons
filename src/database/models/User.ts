@@ -12,6 +12,7 @@ export default class Users extends Model<InferAttributes<Users>, InferCreationAt
   declare autor: string | null;
   declare expira_em: Date | null;
   declare plano_ativo: boolean;
+  declare last_auto_reply_at: Date | null;
 
   static initial(sequelize: Sequelize) {
     Users.init(
@@ -35,6 +36,11 @@ export default class Users extends Model<InferAttributes<Users>, InferCreationAt
 
         // 🔽 novos campos
         expira_em: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
+        last_auto_reply_at: {
           type: DataTypes.DATE,
           allowNull: true,
           defaultValue: null,

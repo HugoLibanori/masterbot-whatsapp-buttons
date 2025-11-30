@@ -226,6 +226,20 @@ export const updateName = async (id_usuario: string, nome: string) => {
   await Users.update({ nome }, { where: { id_usuario } });
 };
 
+export const getLastAutoReplyAt = async (id_usuario: string): Promise<Date | null> => {
+  const user = await Users.findOne({ where: { id_usuario } });
+  if (!user) return null;
+  const plain = user.get({ plain: true });
+  return plain.last_auto_reply_at ?? null;
+};
+
+export const setLastAutoReplyAt = async (id_usuario: string, date: Date | null) => {
+  const user = await Users.findOne({ where: { id_usuario } });
+  if (!user) return null;
+  await user.update({ last_auto_reply_at: date });
+  return user.get({ plain: true }).last_auto_reply_at;
+};
+
 export const verificarUltrapassouLimiteComandos = async (
   id_usuario: string,
   botInfo: Partial<Bot>,
