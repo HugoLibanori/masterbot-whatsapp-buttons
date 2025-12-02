@@ -53,7 +53,9 @@ const contentMessage = async (
     // try to fill sender early, will be overridden later if message exists
     try {
       messageContent.sender = getJidBySuffix(message.key, '@s.whatsapp.net') || '';
-    } catch (e) {}
+    } catch (e: any) {
+      console.error(e);
+    }
 
     if (!message.message) return messageContent;
 
@@ -104,7 +106,23 @@ const contentMessage = async (
 
     messageContent.id_chat = id_chat;
     if (!id_chat) {
-      console.warn('[WARN] id_chat ficou vazio! message:', message);
+      // Log mais detalhado para diagnosticar por que id_chat ficou vazio em msgs
+      // view-once / com estruturas especiais. Não vaza todo o objeto, só campos
+      // relevantes.
+      const isViewOnceFlag = Boolean(
+        message.message?.viewOnceMessageV2 ||
+        message.message?.viewOnceMessageV2Extension ||
+        (message.key && (message.key as any).isViewOnce),
+      );
+
+      console.warn('[WARN] id_chat ficou vazio — dados resumidos:', {
+        remoteJid: message.key?.remoteJid,
+        remoteJidAlt: message.key?.remoteJidAlt,
+        participant: message.key?.participant,
+        participantAlt: message.key?.participantAlt,
+        isViewOnce: isViewOnceFlag,
+        hasMessageBody: !!message.message,
+      });
     }
     messageContent.isGroup = id_chat?.includes('@g.us') ?? false;
     messageContent.numberBot = numberBot ?? '';
