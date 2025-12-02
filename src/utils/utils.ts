@@ -306,10 +306,26 @@ export const checkCommandExists = async (
   botInfo: Partial<Bot>,
   command: string,
 ): Promise<{ exists: boolean; admin?: boolean; owner?: boolean }> => {
+  // in-memory cache to avoid re-reading files / re-importing modules repeatedly
+  // key: normalized command name (without prefix), value: lookup result
+  // stored at function scope to survive multiple calls
+  if (!(checkCommandExists as any)._cache) {
+    (checkCommandExists as any)._cache = new Map<
+      string,
+      { exists: boolean; admin?: boolean; owner?: boolean }
+    >();
+  }
   const commandsBasePath = path.resolve('dist', 'bot', 'commands');
   if (!command || !botInfo.prefix) return { exists: false };
 
   const nameCommand = command.replace(botInfo.prefix, '').trim();
+  const cacheKey = nameCommand.toLowerCase();
+  const cache = (checkCommandExists as any)._cache as Map<
+    string,
+    { exists: boolean; admin?: boolean; owner?: boolean }
+  >;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
   const categories = ['admins', 'owner', 'users'];
 
   for (const category of categories) {
@@ -317,7 +333,9 @@ export const checkCommandExists = async (
 
     // Fast path: check file with same name
     if (fs.existsSync(commandPathJs)) {
-      return { exists: true, admin: category === 'admins', owner: category === 'owner' };
+      const res = { exists: true, admin: category === 'admins', owner: category === 'owner' };
+      cache.set(cacheKey, res);
+      return res;
     }
 
     // Slow path: scan command files in the category for aliases
@@ -336,7 +354,9 @@ export const checkCommandExists = async (
           // normalize to lowercase for comparison
           const normalizedAliases = aliases.map((a) => String(a).toLowerCase());
           if (normalizedAliases.includes(nameCommand.toLowerCase())) {
-            return { exists: true, admin: category === 'admins', owner: category === 'owner' };
+            const res = { exists: true, admin: category === 'admins', owner: category === 'owner' };
+            cache.set(cacheKey, res);
+            return res;
           }
         } catch (err) {
           // ignore single file errors (bad module) and continue
@@ -349,7 +369,9 @@ export const checkCommandExists = async (
     }
   }
 
-  return { exists: false };
+  const res = { exists: false };
+  cache.set(cacheKey, res);
+  return res;
 };
 
 export const isPlatform = async (link: string, grupo: Grupo) => {
