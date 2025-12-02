@@ -80,7 +80,7 @@ export const checkingMessage = async (
 
     const msgGuide = args?.[0]?.toLowerCase() === 'guia';
     if (msgGuide) {
-      const guide = await commandGuide(sock, dataBot, commandName, cmd);
+      const guide = await commandGuide(sock, dataBot, cmd.aliases[0], cmd);
       await sock.sendText(id_chat, guide);
       return;
     }
@@ -152,7 +152,6 @@ export const checkingMessage = async (
             } catch {}
           }
         }
-        
       }
     }
   }

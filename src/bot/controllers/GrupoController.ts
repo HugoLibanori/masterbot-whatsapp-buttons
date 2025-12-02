@@ -898,8 +898,7 @@ export const filterAntiLink = async (
 ): Promise<boolean> => {
   try {
     const comandos_info = commandInfo();
-    const { textFull, sender, id_chat, isGroup, grupo, quotedMsg, pushName, senderLid } =
-      messageContent;
+    const { textFull, sender, id_chat, isGroup, grupo, pushName, senderLid } = messageContent;
     const usuarioTexto = textFull;
     const { id_group, isBotAdmin, dataBd } = { ...grupo };
     const { admins, antilink } = { ...dataBd };
@@ -1038,7 +1037,7 @@ export const welcomeMessage = async (
       try {
         fotoUrl = await sock.getImagePerfil(evento.participants[0]);
       } catch (err: any) {
-        console.log();
+        console.log(err, 'Erro ao obter foto de perfil do usuário');
       }
       const bufferImg = await gerarImagemBemVindo(telefone, grupoInfo.nome, fotoUrl);
 

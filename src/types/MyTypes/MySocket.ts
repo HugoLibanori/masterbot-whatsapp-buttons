@@ -212,4 +212,6 @@ export interface ISocket {
   sendButtons(id_chat: string, options: types.MyButtons): Promise<types.MyWAMessage | undefined>;
 
   sendButtonPix(id_chat: string, options: types.MyButtonPix): Promise<types.MyWAMessage>;
+
+  sendTextBroadcast(chatId: string, text: string): Promise<types.MyWAMessage>;
 }

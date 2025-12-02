@@ -49,3 +49,4 @@ export * from './updateMediaMessage.js';
 export * from './sendButtons.js';
 export * from './sendButtonPix.js';
 export * from './sendFileBufferWithMentionsForward.js';
+export * from './sendTextBroadcast.js';

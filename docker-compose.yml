@@ -12,8 +12,8 @@ services:
       --max_binlog_size=100M
       --binlog_expire_logs_seconds=259200
       --skip-log-bin
-      --innodb_buffer_pool_size=512MB
-      --innodb_log_file_size=256MB
+      --innodb_buffer_pool_size=256M
+      --innodb_log_file_size=64M
       --performance_schema=0
       --general_log=0
       --slow_query_log=0

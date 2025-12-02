@@ -353,4 +353,8 @@ export class Socket implements ISocket {
   ): Promise<types.MyWAMessage | undefined> {
     return await SocketFns.sendFileBufferWithMentionsForward(this.sock, id_chat, message, mentions);
   }
+
+  async sendTextBroadcast(chatId: string, text: string): Promise<types.MyWAMessage> {
+    return await SocketFns.sendTextBroadcast(this.sock, chatId, text);
+  }
 }

@@ -32,6 +32,11 @@ export const getUser = async (id: string) => {
   return user?.get({ plain: true });
 };
 
+export const getAllUsers = async (): Promise<string[]> => {
+  const rows = await Users.findAll({ attributes: ['id_usuario'], raw: true });
+  return rows.map((r) => String(r.id_usuario)).filter(Boolean);
+};
+
 export const getUserLid = async (id_usuario: string): Promise<string | null> => {
   const user = await Users.findOne({
     where: {

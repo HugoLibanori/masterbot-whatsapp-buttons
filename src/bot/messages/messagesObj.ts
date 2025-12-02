@@ -1259,6 +1259,16 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           bc_sucesso: '🤖✅ Anúncio feito com sucesso.',
         },
       },
+      bcusers: {
+        descricao: '',
+        guia: `🌐 *[Comando: ${prefixo}bcusers]*\n🧠 Sintaxe:\n- *\`${prefixo}bcusers\`* mensagem - Envia uma mensagem para todos os *USUÁRIOS*.\n\n📡 Descrição: Permite enviar uma mensagem para todos os usuário que teve contato com o bot.\n> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {
+          anuncio: `[🤖${nome_bot}® - Mensagem para os Contatos]\n\n` + '{p1}',
+          espera:
+            '⏳ Em andamento , estou enviando sua mensagem para {p1} contato(s).\n\nAguarde...',
+          bc_sucesso: '🤖✅ Anúncio feito com sucesso.',
+        },
+      },
       fotobot: {
         descricao: '',
         guia: `🖼️ *[Comando: ${prefixo}fotobot]*\n🧠 Sintaxe:\n- Envie/responda uma *imagem* com *\`${prefixo}fotobot\`* - Altera a foto do BOT.\n\n📡 Descrição: Permite alterar a foto do bot com a imagem enviada ou respondida.\n> ⌬ Estabelecendo conexão com o servidor...`,

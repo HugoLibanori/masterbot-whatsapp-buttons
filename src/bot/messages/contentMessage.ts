@@ -63,21 +63,6 @@ const contentMessage = async (
     const type = getContentType(msg);
     const numberBot = sock.user?.lid?.replace(/:\d+/, '');
     const numberOwner = await userController.getOwner();
-    // const idSenderGroup =
-    //   [message?.key?.participantAlt, message?.key?.participant]?.find((jid) =>
-    //     jid?.includes('@s.whatsapp.net'),
-    //   ) || '';
-    // const idSenderLidGroup =
-    //   [message?.key?.participantAlt, message?.key?.participant]?.find((jid) =>
-    //     jid?.includes('@lid'),
-    //   ) || '';
-    // const idSenderPv =
-    //   [message?.key?.remoteJidAlt, message?.key?.remoteJid]?.find((jid) =>
-    //     jid?.includes('@s.whatsapp.net'),
-    //   ) || '';
-    // const idSenderLidPv =
-    //   [message?.key?.remoteJidAlt, message?.key?.remoteJid]?.find((jid) => jid?.includes('@lid')) ||
-    //   '';
 
     const messageKey = type as keyof types.MyWAMessageContent;
     const content = msg?.[messageKey] as
@@ -106,6 +91,30 @@ const contentMessage = async (
 
     messageContent.id_chat = id_chat;
     if (!id_chat) {
+      // fallback attempts: if remoteJid exists use it, otherwise try remoteJidAlt,
+      // then participantAlt/participant (useful for PV / view-once messages)
+      const remote = message.key?.remoteJid ?? message.key?.remoteJidAlt;
+      const partAlt = message.key?.participantAlt;
+      const part = message.key?.participant;
+
+      if (remote) {
+        id_chat = String(remote).replace(/:\d+/, '');
+        messageContent.id_chat = id_chat;
+        messageContent.isGroup = id_chat?.includes('@g.us') ?? false;
+      } else if (partAlt) {
+        // if participantAlt looks like a user JID, treat it as chat id for PV
+        if (String(partAlt).endsWith('@s.whatsapp.net') || String(partAlt).endsWith('@lid')) {
+          id_chat = String(partAlt).replace(/:\d+/, '');
+          messageContent.id_chat = id_chat;
+          messageContent.isGroup = id_chat?.includes('@g.us') ?? false;
+        }
+      } else if (part) {
+        if (String(part).endsWith('@s.whatsapp.net') || String(part).endsWith('@lid')) {
+          id_chat = String(part).replace(/:\d+/, '');
+          messageContent.id_chat = id_chat;
+          messageContent.isGroup = id_chat?.includes('@g.us') ?? false;
+        }
+      }
       // Log mais detalhado para diagnosticar por que id_chat ficou vazio em msgs
       // view-once / com estruturas especiais. Não vaza todo o objeto, só campos
       // relevantes.
