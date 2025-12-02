@@ -35,6 +35,26 @@ const contentMessage = async (
 ): Promise<MessageContent> => {
   try {
     const messageContent: MessageContent = getDefaultMessageContent();
+
+    // Preencher id_chat / isGroup e sender já no início — necessário para casos
+    // como mensagens view-once onde message.message pode não estar presente e
+    // ainda assim precisamos do id do chat para tomar decisões (ex: auto-reply).
+    let id_chat_initial = '';
+    if (message?.key?.remoteJid?.includes('@g.us')) {
+      id_chat_initial = message.key?.remoteJid?.replace(/:\d+/, '') ?? '';
+    } else {
+      id_chat_initial =
+        message.key?.remoteJid?.replace(/:\d+/, '') ??
+        message.key?.remoteJidAlt?.replace(/:\d+/, '') ??
+        '';
+    }
+    messageContent.id_chat = id_chat_initial;
+    messageContent.isGroup = id_chat_initial?.includes('@g.us') ?? false;
+    // try to fill sender early, will be overridden later if message exists
+    try {
+      messageContent.sender = getJidBySuffix(message.key, '@s.whatsapp.net') || '';
+    } catch (e) {}
+
     if (!message.message) return messageContent;
 
     const msg = message.message;
