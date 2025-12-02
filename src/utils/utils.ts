@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import { tmpdir } from 'node:os';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import crypto from 'node:crypto';
 import pkg from 'node-webpmux';
 const { Image } = pkg;
@@ -314,12 +315,37 @@ export const checkCommandExists = async (
   for (const category of categories) {
     const commandPathJs = path.join(commandsBasePath, category, `${nameCommand}.js`);
 
-    if ((category === 'admins' || category === 'owner') && fs.existsSync(commandPathJs)) {
+    // Fast path: check file with same name
+    if (fs.existsSync(commandPathJs)) {
       return { exists: true, admin: category === 'admins', owner: category === 'owner' };
     }
 
-    if (fs.existsSync(commandPathJs)) {
-      return { exists: true };
+    // Slow path: scan command files in the category for aliases
+    const categoryPath = path.join(commandsBasePath, category);
+    if (!fs.existsSync(categoryPath)) continue;
+
+    try {
+      const files = fs.readdirSync(categoryPath).filter((f) => f.endsWith('.js'));
+      for (const file of files) {
+        const filePath = path.join(categoryPath, file);
+        try {
+          const mod = await import(pathToFileURL(filePath).toString());
+          const cmdObj = (mod && (mod.default || mod)) as Partial<Command> | undefined;
+          if (!cmdObj) continue;
+          const aliases = cmdObj.aliases ?? [];
+          // normalize to lowercase for comparison
+          const normalizedAliases = aliases.map((a) => String(a).toLowerCase());
+          if (normalizedAliases.includes(nameCommand.toLowerCase())) {
+            return { exists: true, admin: category === 'admins', owner: category === 'owner' };
+          }
+        } catch (err) {
+          // ignore single file errors (bad module) and continue
+          continue;
+        }
+      }
+    } catch (err) {
+      // ignore read/scan errors and keep trying other categories
+      continue;
     }
   }
 
