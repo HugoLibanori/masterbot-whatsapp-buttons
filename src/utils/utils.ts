@@ -476,7 +476,7 @@ export const getNsfw = async (bufferImage: Buffer, botInfo: Partial<Bot>, sock: 
   try {
     const [result] = await client.safeSearchDetection(bufferImage);
     const detections = result.safeSearchAnnotation;
-    return detections?.adult === 'VERY_LIKELY';
+    return detections?.adult === 'VERY_LIKELY' || detections?.adult === 'LIKELY';
   } catch (error: any) {
     if (error.response) {
       console.log(error.response.data);

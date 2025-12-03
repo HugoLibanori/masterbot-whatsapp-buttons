@@ -21,7 +21,10 @@ export async function useSequelizeAuthState(botId: number) {
   };
 
   const keys = {
-    get: async <T extends keyof SignalDataTypeMap>(type: T, ids: string[]): Promise<{ [key: string]: SignalDataTypeMap[T] }> => {
+    get: async <T extends keyof SignalDataTypeMap>(
+      type: T,
+      ids: string[],
+    ): Promise<{ [key: string]: SignalDataTypeMap[T] }> => {
       const data: { [key: string]: SignalDataTypeMap[T] } = {};
       for (const id of ids) {
         let value = saved.keys?.[type]?.[id];
