@@ -1,10 +1,5 @@
 import * as types from '../../types/BaileysTypes/index.js';
-import {
-  MessageContent,
-  Command,
-  Bot,
-  CommandReturn,
-} from '../../interfaces/index.js';
+import { MessageContent, Command, Bot, CommandReturn } from '../../interfaces/index.js';
 
 import { ISocket } from '../../types/MyTypes/index.js';
 

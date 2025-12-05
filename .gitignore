@@ -4,5 +4,6 @@ session
 package-lock.json
 .env
 **/cookies.txt
-
+.continue
+.github
 

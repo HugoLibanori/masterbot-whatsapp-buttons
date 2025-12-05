@@ -112,12 +112,6 @@ export const checkingSendMessage = async (
     // OBTENDO DADOS ATUALIZADOS DO USUÁRIO
     const dataUser = await userController.getUser(sender);
 
-    //SE O CONTADOR TIVER ATIVADO E FOR UMA MENSAGEM DE GRUPO, VERIFICA SE O USUARIO EXISTE NO CONTADOR , REGISTRA ELE E ADICIONA A CONTAGEM
-    if (isGroup && dataBd?.contador.status) {
-      await grupoController.verificarRegistrarContagemParticipante(id_group, sender);
-      await grupoController.addParticipantCount(id_group, sender, type!);
-    }
-
     //SE FOR BLOQUEADO RETORNE
     if (userBlock) return false;
     //SE O GRUPO ESTIVER COM O RECURSO 'MUTADO' LIGADO E USUARIO NÃO FOR ADMINISTRADOR
