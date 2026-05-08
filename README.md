@@ -6,14 +6,6 @@
 
 ---
 
-## 🚀 Novidades desta Versão
-- **Estabilidade Reforçada**: Proteção contra o erro 428 (Connection Closed) com carregamento otimizado de grupos.
-- **Sistema de Licenciamento Comercial**: Proteja seu bot com chaves de segurança criptografadas (ideal para venda).
-- **Gerador de Licenças**: Script integrado para gerenciar o acesso de seus clientes.
-- **Painel Frontend**: Interface web para métricas e logs.
-
----
-
 ## ✅ Requisitos do Sistema
 
 - **Node.js**: v20.x ou superior (LTS recomendado).
