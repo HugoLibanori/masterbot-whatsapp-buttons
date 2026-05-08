@@ -1,256 +1,141 @@
-<h1 aling="center">M@ste® Bot - Automatizando grupos de whatsapp!</h1>
+<h1 align="center">M@ste® Bot - Automatizando Grupos de WhatsApp!</h1>
 
----
-
-## ✅ Requisitos:
-
-- Nodejs LTS instalado.
-- Ffmpeg instalado.
-- Git instalado.
-- Docker e Docker Compose instalado.
-- Um numero do whatsapp para conectar ao bot.
-
----
-
-## 🧩 Instalação
-
-### Windows/Linux
-
-Faça o download da última versão do bot [clicando aqui](https://github.com/HugoLibanori/masterbot-whatsapp-buttons/), e com o terminal aberto, entre na pasta do bot.
-
-Instale as dependências:
-
-```bash
-npm i
-```
-
-Depois que instalar os modulos você digita:
-
-```bash
-npx tsc
-```
-
-Para buildar o projeto e depois:
-
-```bash
-npm start
-```
-
-Espere ele criar o arquivo .env com os dados do banco de dados. Por default ele ja vem preenchido, mude para seu uso.
-
-ex:
-
-```bash
-# CONFIGURAÇÃO PARA BANCO DE DADOS
-DATABASE=M@ste®_Bot
-DATABASE_USERNAME=root
-DATABASE_PASSWORD=123456
-DATABASE_HOST=localhost
-DATABASE_PORT=3306
-DATABASE_DIALECT=mysql
-
-# CONFIGURAÇÕES MYSQL
-MYSQL_DATABASE=M@ste®_Bot
-MYSQL_ROOT_PASSWORD=123456
-CONTAINER_NAME=BD_BOT
-```
-
-Modifique ao seu gosto.
-
-<br>
-
-## 2 - 💾 Banco de Dados
-
-### Mysql
-
-<p>
-Você deve ter o Docker instalado no seu sistema, o bot usa o Sequelize para banco de dados.
+<p align="center">
+  O Masterbot é uma solução completa para gerenciamento de grupos de WhatsApp, com sistema de figurinhas, downloads, utilidades e um painel de administração robusto.
 </p>
 
-###### A - Depois que o arquivo estiver preenchido, rode os comandos abaixo:
+---
 
-obs: você deve entrar dentro da pasta do bot.
+## 🚀 Novidades desta Versão
+- **Estabilidade Reforçada**: Proteção contra o erro 428 (Connection Closed) com carregamento otimizado de grupos.
+- **Sistema de Licenciamento Comercial**: Proteja seu bot com chaves de segurança criptografadas (ideal para venda).
+- **Gerador de Licenças**: Script integrado para gerenciar o acesso de seus clientes.
+- **Painel Frontend**: Interface web para métricas e logs.
 
+---
+
+## ✅ Requisitos do Sistema
+
+- **Node.js**: v20.x ou superior (LTS recomendado).
+- **MySQL**: v8.0+ para banco de dados.
+- **FFmpeg**: Necessário para conversão de áudio e vídeo (stickers).
+- **Git**: Para clonagem e versionamento.
+- **PM2**: Recomendado para rodar em produção (VPS).
+
+---
+
+## 🧩 Instalação Passo a Passo
+
+### 1. Clonar o Repositório
 ```bash
-docker compose up -d
+git clone https://github.com/HugoLibanori/masterbot-whatsapp-buttons.git
+cd masterbot-whatsapp-buttons
 ```
 
-Este comando irá criar um container com o nome Master_Bot, e o banco de dados com o nome BD_BOT. Esses nomes estão no arquivo `.env` mude conforme sua nescessidade!
-
+### 2. Instalar Dependências
+Você deve instalar as dependências em todas as pastas:
 ```bash
+# Na raiz
+npm install
+
+# No Backend
+cd backend && npm install
+
+# No Frontend
+cd ../frontend && npm install
+```
+
+### 3. Configurar o Ambiente (.env)
+O bot usa dois arquivos `.env`. Use os modelos fornecidos:
+
+**Backend (`backend/.env`):**
+```bash
+cp backend/.env.example backend/.env
+# Edite com seus dados de MySQL e chaves de API
+```
+
+**Frontend (`frontend/.env`):**
+```bash
+cp frontend/.env.example frontend/.env
+# Edite com as URLs do seu servidor
+```
+
+### 4. Preparar o Banco de Dados
+Certifique-se de que o MySQL está rodando e o banco de dados definido no `.env` foi criado. Depois, rode as migrações:
+```bash
+cd backend
 npx sequelize db:migrate
 ```
 
-Cria as tabelas do BD.
-
-Pronto, se não ocorreu nenhum erro seu banco de dados foi criado.
-
-## 3 - 🚀 Iniciando o Bot
-
-Depois de tudo configurado certinho rode o comando abaixo e inicie seu bot.
-
+### 5. Sistema de Licença (Importante para Venda)
+Para o bot funcionar, ele precisa de uma licença ativa.
+- A sessão definida em `OWNER_SESSION_NAME` no `.env` tem acesso livre.
+- Para gerar licenças para clientes:
 ```bash
-npm start
+cd backend
+npm run license:gen nome_da_sessao
 ```
-
-Pronto, seu bot esta pronto para uso.
+*Copie a chave gerada e insira no campo `validation_key` da tabela `bot_licenses` do cliente.*
 
 ---
 
-## 📚 Comandos Disponíveis
+## 🚀 Executando o Bot
 
-Aqui estão alguns dos comandos mais importantes com exemplos de uso:
-
-#### 🖼️ MENU FIGURINHAS
-
-Transforme imagens, vídeos ou texto em figurinhas com diversos estilos:
-
+### Modo Desenvolvimento
 ```bash
-!s # Transformar imagem/vídeo em figurinha
-!s 1 # Recorta vídeo/GIF
-!s 2 # Sticker circular
-!snome pack, autor # Renomeia o sticker
-!simg # Sticker → Foto
-!ssf # Sticker sem fundo
-!emojimix 💩+😀 # 2 Emojis → Sticker
-!emojimg 😀 # Emoji → Sticker
-!tps texto # Texto → Sticker
-!atps texto # Texto → Sticker animado
-!smeme textoCima, textoBaixo # Meme em sticker
-!nomepack nome # Define nome do pack
-!nomeautor autor # Define autor do sticker
+# Backend
+cd backend && npm run dev
 
+# Frontend
+cd frontend && npm run dev
 ```
 
-#### ⚒️ MENU UTILIDADES
-
-Ferramentas úteis de imagem e voz:
-
+### Modo Produção (VPS)
 ```bash
-!voz idioma texto # Texto → Áudio
-!rbg # Remove o fundo da imagem
-```
+# Gerar o build (converter TS para JS)
+npm run build
 
-#### 📥 MENU DOWNLOADS
-
-Baixe vídeos, músicas e imagens com facilidade:
-
-```bash
-!play nome # Baixa música
-!yt nome # Baixa vídeo do YouTube
-!fb link # Baixa vídeo do Facebook
-!ig link # Baixa mídia do Instagram
-!img tema # Baixa imagem por tema
-```
-
-#### 👨‍👩‍👧‍👦 MENU GRUPO (admin)
-
-Gerencie seu grupo com funções avançadas (admin)
-
-```bash
-!status # Ver status dos recursos
-!regras # Regras do grupo
-!adms # Lista de admins
-!fotogrupo # Alterar foto do grupo
-!mt mensagem # Mencionar todos (ADM/Membros)
-!mm mensagem # Mencionar apenas membros
-!dono # Mostra dono do grupo
-!fixar # Fixa uma mensagem
-!desfixar # Desfixa mensagem
-```
-
-###### CONTROLE DE ATIVIDADE
-
-```bash
-!contador # Liga/desliga contador
-!atividade @user # Atividade do usuário
-!imarcar 1-50 # Marca inativos
-!ibanir 1-50 # Bane inativos
-!topativos 1-50 # Ranking mais ativos
-```
-
-###### BLOQUEIO DE COMANDOS
-
-```bash
-!bcmd comandos # Bloqueia comandos
-!dcmd comandos # Desbloqueia comandos
-```
-
-###### LISTA NEGRA
-
-```bash
-!listanegra # Ver lista negra
-!addlista número # Adicionar número à lista negra
-!remlista número # Remover número da
-```
-
-###### RECURSOS
-
-```bash
-!mutar # Ativar/desativar comandos
-!autosticker # Sticker automático
-!alink # Anti-link
-!aporno # Anti-pornô
-!bv # Mensagem de boas-vindas
-!afake # Anti-fake
-!aflood # Anti-flood
-```
-
-###### REVELAR MENSAGENS
-
-```bash
-!revelar # Revela uma mensagem única do grupo
-```
-
-#### 👑 MENU ADMIN (Administração do bot)
-
-```bash
-!nomebot nome # Altera nome do bot e atualiza menus
-!nomeadm nome # Altera nome do administrador e atualiza menus
-!nomesticker nome # Altera nome do pacote de figurinhas
-!prefixo símbolo # Altera o prefixo dos comandos
-!fotobot # Altera foto do BOT
-
-!infobot # Informação completa do BOT
-!bloquear @usuario # Bloqueia o usuário mencionado
-!desbloquear @usuario # Desbloqueia o usuário mencionado
-!listablock # Lista usuários bloqueados
-!bcgrupos mensagem # Envia mensagem de broadcast para todos os grupos
-
-!verdados @usuario # Mostra os dados de um usuário
-!usuarios tipo # Lista usuários de determinado tipo
-!tipos # Lista todos os tipos de usuário
-!novotipo tipo,titulo,cmds # Cria novo tipo de usuário
-!tipotitulo tipo,titulo # Altera título de um tipo de usuário
-!deltipo tipo # Remove tipo de usuário
-!usuariotipo tipo @usuario # Altera tipo de usuário
-!limpartipo tipo # Remove todos usuários desse tipo
-!limparcomandos # Limpa os comandos de todos os usuários
-
-!bcmdglobal cmd1 cmd2 # Bloqueia comandos globalmente
-!dcmdglobal cmd1 cmd2 # Desbloqueia comandos globalmente
-
-!limitediario # Ativa/desativa limite diário de comandos
-!tipocomandos tipo qtd # Define limite de comandos por tipo
-!rtodos # Reseta comandos diários de todos usuários
-!r @usuario # Reseta comandos diários de um usuário
-
-!taxacomandos quantidade # Define taxa de comandos por minuto
-
-!pvliberado # Ativa/desativa comandos em mensagens privadas
-!autostickerpv # Ativa/desativa stickers automáticos no PV
-
-!grupos # Lista os grupos onde o BOT está
-!linkgrupo número # Mostra o link de um grupo
-!sair # Sai do grupo atual
-!sairgrupos # Sai de todos os grupos
-!entrargrupo link # Entra em um grupo pelo link
-!oficialgrupo link # Marca grupo como oficial do BOT
-!apis nomeApi valorApi # Define a apiKey da api
+# Iniciar com PM2 (Recomendado)
+pm2 start ecosystem.config.js
 ```
 
 ---
 
-## 🙏 Agradecimentos
+## 📚 Principais Comandos
 
-- [Baileys](https://github.com/WhiskeySockets/Baileys) - Biblioteca de uso para conexão ao whatsapp
+### 🖼️ Figurinhass
+- `!s` - Imagem/Vídeo para figurinha.
+- `!ssf` - Figurinha sem fundo (Remove.bg).
+- `!tps` - Texto para figurinha.
+
+### 📥 Downloads
+- `!play` - Baixar música (YouTube).
+- `!yt` - Baixar vídeo (YouTube).
+- `!ig` - Baixar do Instagram.
+
+### 👨‍👩‍👧‍👦 Gestão de Grupos
+- `!alink` - Ativar/Desativar anti-link.
+- `!listanegra` - Gestão de usuários banidos.
+- `!mt` - Marcar todos os membros.
+
+### 👑 Administração do Bot (Apenas Dono)
+- `!nomebot` - Altera nome do bot.
+- `!infobot` - Status completo do sistema.
+- `!bcgrupos` - Broadcast para todos os grupos.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+- **Baileys**: Conexão estável com o protocolo WhatsApp.
+- **Next.js**: Painel web moderno e rápido.
+- **Sequelize**: ORM para manipulação de banco de dados MySQL.
+- **Sharp/FFmpeg**: Processamento de mídias e stickers.
+
+---
+
+## 🙏 Agradecimentos e Créditos
+- [Baileys](https://github.com/WhiskeySockets/Baileys) - Biblioteca core.
+- **Comunidade Masterbot** - Pelo feedback e melhorias constantes.
+
+---
+<p align="center">Dúvidas? Consulte o arquivo <code>GUIA_VPS_INSTALL.md</code> para mais detalhes sobre VPS.</p>
