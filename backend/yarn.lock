@@ -397,30 +397,6 @@
   resolved "https://registry.yarnpkg.com/@img/sharp-win32-x64/-/sharp-win32-x64-0.34.5.tgz#a81ffb00e69267cd0a1d626eaedb8a8430b2b2f8"
   integrity sha512-+29YMsqY2/9eFEiW93eqWnuLcWcufowXewwSNIT6UwZdUUCrM3oFjMWH/Z6/TMmb4hlFenmfAVbpWeup2jryCw==
 
-"@innovatorssoft/baileys@^7.3.4":
-  version "7.3.4"
-  resolved "https://registry.npmjs.org/@innovatorssoft/baileys/-/baileys-7.3.4.tgz"
-  integrity sha512-tQu64pyE0tWQrvY0aInfE864P0naHBlY6MX7uHsAHW0BrD+vvxP3txBtFqq4JaKV6JR9LDTuiLHzgvSF1oMbVg==
-  dependencies:
-    "@adiwajshing/keyed-db" "^0.2.4"
-    "@cacheable/node-cache" "1.5.3"
-    "@hapi/boom" "^9.1.3"
-    "@itsukichan/eslint-config" "^1.0.0"
-    "@itsukichan/libsignal-node" "^1.0.1"
-    async-mutex "^0.5.0"
-    audio-decode "^2.2.2"
-    axios "^1.12.1"
-    cache-manager "^5.7.6"
-    fflate "^0.8.2"
-    link-preview-js "^3.0.14"
-    lodash "^4.17.21"
-    lru-cache "^11.1.0"
-    music-metadata "^7.12.3"
-    pino "^9.6"
-    protobufjs "^7.2.4"
-    qrcode-terminal "^0.12.0"
-    ws "^8.13.0"
-
 "@innovatorssoft/baileys@github:innovatorssoft/baileys":
   version "7.4.3"
   resolved "https://codeload.github.com/innovatorssoft/baileys/tar.gz/0afe49c864f3a0403f447585950b5f8c3387fd0a"
