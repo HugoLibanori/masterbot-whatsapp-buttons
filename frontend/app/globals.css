@@ -1,0 +1,84 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'Cantarell',
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  background: #1e1e2e;
+  color: #f8f8f2;
+}
+a {
+  color: #8be9fd;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+button {
+  cursor: pointer;
+  background: #6272a4;
+  border: 1px solid #44475a;
+  color: #f8f8f2;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+input {
+  background: #282a36;
+  border: 1px solid #44475a;
+  color: #f8f8f2;
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+table {
+  color: inherit;
+}
+
+.btn-pill {
+  background: linear-gradient(120deg, #6272a4, #bd93f9);
+  border: 1px solid rgba(189, 147, 249, 0.6);
+  color: #f8f8f2;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(189, 147, 249, 0.25);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+  min-width: 150px;
+}
+.btn-pill:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(189, 147, 249, 0.35);
+  filter: brightness(1.05);
+}
+.btn-pill:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  transform: none;
+}
+.btn-pill.btn-pill--danger {
+  background: linear-gradient(120deg, #ff5555, #ff79c6);
+  border: 1px solid rgba(255, 121, 198, 0.6);
+  box-shadow: 0 6px 18px rgba(255, 85, 85, 0.25);
+}
+.btn-pill.btn-pill--compact {
+  padding: 8px 16px;
+  min-width: auto;
+}

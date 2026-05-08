@@ -1,0 +1,64 @@
+import { Sequelize, Model, DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
+
+export default class Users extends Model<InferAttributes<Users>, InferCreationAttributes<Users>> {
+  declare id_usuario: string;
+  declare id_lid: string;
+  declare nome: string;
+  declare comandos_total: number;
+  declare comandos_dia: number;
+  declare tipo: string;
+  declare advertencia: number;
+  declare pack: string | null;
+  declare autor: string | null;
+  declare expira_em: Date | null;
+  declare plano_ativo: boolean;
+  declare last_auto_reply_at: Date | null;
+
+  static initial(sequelize: Sequelize) {
+    Users.init(
+      {
+        id_usuario: {
+          type: DataTypes.STRING,
+          primaryKey: true,
+          allowNull: false,
+        },
+        id_lid: {
+          type: DataTypes.STRING,
+          allowNull: true,
+          unique: true,
+          defaultValue: null,
+        },
+        nome: DataTypes.STRING,
+        comandos_total: { type: DataTypes.INTEGER, defaultValue: 0 },
+        comandos_dia: { type: DataTypes.INTEGER, defaultValue: 0 },
+        tipo: { type: DataTypes.STRING, defaultValue: 'comum' },
+        advertencia: { type: DataTypes.INTEGER, defaultValue: 0 },
+        pack: { type: DataTypes.STRING, defaultValue: null },
+        autor: { type: DataTypes.STRING, defaultValue: null },
+
+        // 🔽 novos campos
+        expira_em: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
+        last_auto_reply_at: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
+        plano_ativo: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+      },
+      {
+        sequelize,
+        tableName: 'users',
+        timestamps: true,
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+      },
+    );
+  }
+}

@@ -1,0 +1,34 @@
+# IDEs, Tools and OS
+.vscode/
+.roo/
+.continue/
+.github/
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+backend/dist/
+.next/
+frontend/.next/
+out/
+frontend/out/
+
+# Environment and Secrets
+.env
+.env.local
+backend/.env
+frontend/.env
+frontend/.env.local
+**/cookies.txt
+
+# Sessions and Temp
+backend/session/
+*.log
+
+# Optional: keep package-lock if you want consistent builds across environments
+# package-lock.json
