@@ -96,7 +96,7 @@ export const checkingMessage = async (
       if (!permitido) return;
     }
 
-    logCommand(command, pushName ?? 'Desconhecido', group_name, isGroup!);
+    logCommand(sock.session_name, command, pushName ?? 'Desconhecido', group_name, isGroup!);
 
     await runCommand(cmd, sock, message, messageContent, args ?? [], dataBot);
 

@@ -1,21 +1,22 @@
 'use client';
 
-import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 
 interface Props {
   open: boolean;
-  title?: string;
-  description?: string;
+  title: string;
+  description: string;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void | Promise<void>;
+  onConfirm: () => void;
   onCancel: () => void;
   children?: React.ReactNode;
 }
 
 export default function ConfirmModal({
   open,
-  title = 'Confirmação',
+  title,
   description,
   confirmText = 'Confirmar',
   cancelText = 'Cancelar',
@@ -23,59 +24,91 @@ export default function ConfirmModal({
   onCancel,
   children,
 }: Props) {
-  if (!open) return null;
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.35)',
-        zIndex: 10000,
-        display: 'grid',
-        placeItems: 'center',
-      }}
-    >
-      <div
-        style={{
-          background: '#1e1e2e',
-          borderRadius: 10,
-          padding: 16,
-          width: 'min(92vw, 420px)',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-        }}
-      >
-        <h3 style={{ margin: 0, marginBottom: 8 }}>{title}</h3>
-        {description && (
-          <p style={{ marginTop: 0, marginBottom: 16, color: '#ffffffff' }}>{description}</p>
-        )}
-        {children && <div style={{ marginBottom: 16 }}>{children}</div>}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onCancel}
             style={{
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: '1px solid #083c0aff',
-              background: '#15e326ff',
-              color: '#ffffffff',
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 9998,
             }}
-          >
-            {cancelText}
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: '1px solid #5f0606ff',
-              background: '#b91010ff',
-              color: 'white',
-            }}
-          >
-            {confirmText}
-          </button>
-        </div>
-      </div>
-    </div>
+          />
+
+          {/* Modal Content */}
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: 20,
+            pointerEvents: 'none'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass-card"
+              style={{
+                width: '100%',
+                maxWidth: 480,
+                padding: 32,
+                display: 'grid',
+                gap: 20,
+                pointerEvents: 'auto',
+                border: '1px solid rgba(189, 147, 249, 0.2)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#fff' }}>{title}</h2>
+                <button 
+                  onClick={onCancel}
+                  style={{ background: 'transparent', border: 'none', color: '#6272a4', padding: 4 }}
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div>
+                <p style={{ margin: 0, color: '#bfc0d4', lineHeight: 1.6 }}>{description}</p>
+                {children && <div style={{ marginTop: 20 }}>{children}</div>}
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <button 
+                  className="btn-primary" 
+                  onClick={onConfirm} 
+                  style={{ flex: 1, padding: '12px' }}
+                >
+                  {confirmText}
+                </button>
+                <button 
+                  onClick={onCancel} 
+                  style={{ 
+                    flex: 1, 
+                    padding: '12px', 
+                    background: 'rgba(255,255,255,0.05)', 
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#6272a4'
+                  }}
+                >
+                  {cancelText}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

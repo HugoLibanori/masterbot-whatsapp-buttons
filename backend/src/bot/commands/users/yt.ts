@@ -44,7 +44,7 @@ const command: Command = {
       );
 
       const imgUrl = (
-        resultadoInfoVideo?.thumbnail.thumbnails as {
+        resultadoInfoVideo?.thumbnails as {
           url: string;
           width: number;
           height: number;

@@ -129,15 +129,17 @@ const handleConnectionClose = async (
     if (!lastDisconnect) {
       return false;
     }
-    const erroCode = (lastDisconnect?.error as Boom)?.output?.statusCode || new Boom(lastDisconnect?.error)?.output?.statusCode;
+    const erroCode = Number((lastDisconnect?.error as Boom)?.output?.statusCode || new Boom(lastDisconnect?.error)?.output?.statusCode);
     
-    if (erroCode === DisconnectReason?.loggedOut) {
-      console.log(textCommands.outros.desconectado.deslogado);
+    if (erroCode === DisconnectReason?.loggedOut || erroCode === 440 || erroCode === 401) {
+      console.log(`[CONEXÃO] ⚠️ Sessão "${session_name}" inválida (Erro ${erroCode}). Limpando dados para novo login...`);
       await BaileysSession.destroy({ where: { session_name } });
+      setSessionStatus(session_name, 'closed');
+      setSessionQr(session_name, undefined);
       return false;
     } 
     
-    console.log(`[CONEXÃO] Tentando reconectar... Motivo: ${erroCode}`);
+    console.log(`[CONEXÃO] Tentando reconectar sessão "${session_name}"... (Motivo: ${erroCode})`);
     return true;
   } catch (error) {
     console.error('Erro ao tratar a conexão:', error);

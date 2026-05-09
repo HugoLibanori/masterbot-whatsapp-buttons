@@ -49,7 +49,7 @@ export class Event {
       console.log('[SERVIDOR]', textColor(commandInfo().outros.servidor_iniciado));
 
       // LOG NOME BOT
-      nameBotLog();
+      nameBotLog(this.sock.session_name);
     } catch (err: any) {
       consoleErro(err, 'GROUPS.UPDATE');
     }

@@ -37,6 +37,7 @@ import { ISocket } from '../types/MyTypes/index.js';
 import { typeMessages } from '../bot/messages/contentMessage.js';
 import * as userController from '../bot/controllers/UserController.js';
 import * as api from '../bot/api/sticker.js';
+import { Logger } from './logger.js';
 
 export const question = (question: string) => {
   const rl = readline.createInterface({
@@ -565,42 +566,35 @@ export const commandGuide = async (
 };
 
 export const logCommand = (
+  sessionName: string,
   comando: string,
   sender: string,
   grupo: string | null,
   isGroup: boolean,
 ) => {
-  const hora = new Date().toLocaleTimeString('pt-BR');
-  const data = new Date().toLocaleDateString('pt-BR');
-
   const remetente = sender.replace('@s.whatsapp.net', '');
+  const destino = isGroup ? `GRUPO: ${grupo ?? 'Desconhecido'}` : `PRIVADO`;
 
-  const destino = isGroup
-    ? `${chalk.bold.blue('👥 GRUPO:')} ${chalk.greenBright(grupo ?? 'Desconhecido')}`
-    : `${chalk.bold.red('👤 PRIVADO')}`;
-
-  console.log(
-    `${chalk.gray(`[${data} ${hora}]`)} ` +
-      `${chalk.bold.green('💬 COMANDO:')} ${chalk.cyan(comando.padEnd(5))} ` +
-      `${chalk.bold.yellow('👤 DE:')} ${chalk.magenta(remetente.padEnd(5))} ` +
-      `${destino} `,
-  );
+  Logger.command(sessionName, comando, remetente, destino);
 };
 
-export const consoleErro = (msg: string, tipo_erro = 'API') => {
-  console.error(textColor(`[${tipo_erro}]`, '#d63e3e'), msg);
+export const consoleErro = (msg: string, tipo_erro = 'API', sessionName = 'SISTEMA') => {
+  Logger.error(sessionName, `[${tipo_erro}] ${msg}`);
 };
 
-export const nameBotLog = () => {
-  figlet('M@ste® Bot', (err, data) => {
+export const nameBotLog = (sessionName = 'SISTEMA') => {
+  figlet('Master Bot', (err, data) => {
     if (err) {
       console.log('Erro ao gerar o banner ASCII');
       return;
     }
 
-    console.log(chalk.cyanBright(data));
-
+    const banner = data || '';
+    console.log(chalk.cyanBright(banner));
     console.log(chalk.gray('🤖 Sistema operacional online... Aguardando comandos.'));
+
+    // Salva apenas a mensagem inicial no log do banco (sem o banner gigante para evitar timeout)
+    Logger.info(sessionName, '🤖 Sistema operacional online... Aguardando comandos.');
   });
 };
 
