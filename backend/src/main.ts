@@ -1,3 +1,6 @@
+import dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first');
+
 import { connectWhatsapp } from './bootstrap/whatsapp.js';
 import fs from 'fs-extra';
 import path from 'path';

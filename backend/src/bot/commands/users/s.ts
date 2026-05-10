@@ -2,6 +2,9 @@ import { downloadMediaMessage } from '@innovatorssoft/baileys';
 import * as types from '../../../types/BaileysTypes/index.js';
 import fs from 'fs';
 import { exec } from 'child_process';
+import https from 'https';
+
+const ipv4Agent = new https.Agent({ family: 4 });
 
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
 import { ISocket } from '../../../types/MyTypes/index.js';
@@ -48,7 +51,7 @@ const command: Command = {
         return;
       }
 
-      let bufferMidia = await downloadMediaMessage(dataMsg.message, 'buffer', {});
+      let bufferMidia = await downloadMediaMessage(dataMsg.message, 'buffer', { agent: ipv4Agent } as any);
 
       if (dataMsg.type === typeMessages.VIDEO && dataMsg.seconds! > 10) {
         const originalPath = getPathTemp('mp4');
@@ -119,7 +122,7 @@ const command: Command = {
                 : `Atenção @${sender.replace('@s.whatsapp.net', '')}, seu *TIPO* mudou para ${String(res.newTier).toUpperCase()}.`;
               await sock.sendTextWithMentions(id_chat, `${arrow} ${msg}`, [sender]);
             }
-          } catch {}
+          } catch { }
         });
       }
     } catch (error) {
