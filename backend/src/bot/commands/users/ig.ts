@@ -8,7 +8,7 @@ import { snapsave } from 'snapsave-media-downloader';
 
 interface InstagramMedia {
   tipo: 'image' | 'video' | string;
-  resultado: Buffer;
+  url: string;
   [key: string]: any;
 }
 
@@ -34,11 +34,9 @@ async function fetchInstagramLinks(
       const mediaLink = mediaItem?.url;
       const mediaType = mediaItem.type === 'video' ? 'video' : 'image';
 
-      const mediaBuffer = await downloadBufferLink(mediaLink!);
-
       arrayRespostasMidias.push({
         tipo: mediaType,
-        resultado: mediaBuffer,
+        url: mediaLink!,
       });
     }
 
@@ -95,23 +93,19 @@ const command: Command = {
         return await sock.replyText(id_chat, 'Mídia não encontrada ou índice inválido.', message);
       }
 
+      const baileysSock = await sock.getInstance();
+
       if (item[midiaIndex].tipo !== 'video') {
-        await sock.replyFileBuffer(
-          typeMessages.IMAGE,
+        await baileysSock.sendMessage(
           id_chat,
-          item[midiaIndex].resultado,
-          '',
-          message,
-          'image/png',
+          { image: { url: item[midiaIndex].url }, caption: '' },
+          { quoted: message },
         );
       } else {
-        await sock.replyFileBuffer(
-          typeMessages.VIDEO,
+        await baileysSock.sendMessage(
           id_chat,
-          item[midiaIndex].resultado,
-          '',
-          message,
-          'video/mp4',
+          { video: { url: item[midiaIndex].url }, caption: '' },
+          { quoted: message },
         );
       }
 

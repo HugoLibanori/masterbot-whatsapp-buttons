@@ -43,15 +43,16 @@ const command: Command = {
         resultadoInfoVideo.durationFormatted,
       );
 
-      const imgUrl = (
-        resultadoInfoVideo?.thumbnails as {
-          url: string;
-          width: number;
-          height: number;
-        }[]
-      )?.filter((item) => item.width > 300 && item.height > 150);
+      const thumbnails = resultadoInfoVideo?.thumbnails as any[];
+      const firstThumbnail = thumbnails?.[0]?.url || '';
+      const highResThumbnail = thumbnails?.find((item) => item.width > 300 && item.height > 150)?.url;
+      const finalThumbnail = highResThumbnail || firstThumbnail;
 
-      const bufferImg = await axios.get(imgUrl[0]?.url, { responseType: 'arraybuffer' });
+      if (!finalThumbnail) {
+        throw new Error('Nenhuma thumbnail encontrada para este vídeo.');
+      }
+
+      const bufferImg = await axios.get(finalThumbnail, { responseType: 'arraybuffer' });
 
       await sock.sendImage(id_chat, bufferImg.data, mensagemEspera);
 

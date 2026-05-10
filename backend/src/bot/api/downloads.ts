@@ -5,6 +5,10 @@ import { PassThrough } from 'stream';
 import fs from 'fs-extra';
 import axios from 'axios';
 import yt from '@vreden/youtube_scraper';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 import { convertSecondsToMinutes, getPathTemp } from '../../utils/utils.js';
 import { Bot } from 'interfaces/Bot.js';
@@ -301,55 +305,58 @@ const cookies = [
 
 const proxyAgent = ytdl.createAgent(cookies);
 
+const getCookiesPath = () => {
+  const cookiesPath = getPathTemp('txt');
+  let cookieContent = '# Netscape HTTP Cookie File\n';
+  cookies.forEach((c: any) => {
+    const domain = c.domain.startsWith('.') ? c.domain : `.${c.domain}`;
+    cookieContent += `${domain}\tTRUE\t${c.path}\t${c.secure ? 'TRUE' : 'FALSE'}\t${Math.floor(c.expirationDate || 0)}\t${c.name}\t${c.value}\n`;
+  });
+  fs.writeFileSync(cookiesPath, cookieContent);
+  return cookiesPath;
+};
+
+const YTDLP_PATH = './bin/yt-dlp';
+
 interface RespostaInfoVideo {
   resultado?: VideoDetails & { durationFormatted: string };
   erro?: string;
 }
 
 export const getInfoVideoYT = async (texto: string): Promise<RespostaInfoVideo> => {
-  return new Promise((resolve, reject) => {
-    (async () => {
-      try {
-        let resposta: RespostaInfoVideo = {};
-        let video: string | undefined;
-        const isYoutube = new RegExp(
-          /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/[^/\n\s]+\/|(?:youtu\.be\/))([^\s]+)/gi,
-        );
-        if (isYoutube.test(texto)) {
-          await ytdl.getBasicInfo(texto, { agent: proxyAgent }).then((videoId) => {
-            video = videoId.player_response.videoDetails.videoId;
-          });
-        } else {
-          await yts(texto).then((videoId) => {
-            video = videoId.videos[0].videoId;
-          });
-        }
-        if (!video) return;
-        await ytdl
-          .getBasicInfo(video, { agent: proxyAgent })
-          .then((infovideo) => {
-            resposta.resultado = {
-              ...infovideo.player_response.videoDetails,
-              durationFormatted: convertSecondsToMinutes(
-                Number(infovideo.player_response.videoDetails.lengthSeconds),
-              ),
-            };
-            resolve(resposta);
-          })
-          .catch((err) => {
-            console.log(err);
-            if (err.message == 'Status code: 410')
-              resposta.erro =
-                'O video parece ter restrição de idade ou precisa de ter login para assistir.';
-            else resposta.erro = 'Houve um erro ao obter as informações do video.';
-            reject(resposta);
-          });
-      } catch (err) {
-        console.log(`API obterInfoVideoYT - ${err}`);
-        reject({ erro: 'Houve um erro no servidor de pesquisas do Youtube.' });
-      }
-    })();
-  });
+  const cookiesPath = getCookiesPath();
+  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --extractor-args "youtube:player_client=web,android_vr"`;
+  try {
+    let videoUrl = texto;
+    if (!texto.startsWith('http')) {
+      const searchResult = await yts(texto);
+      videoUrl = searchResult.videos[0]?.url;
+    }
+
+    if (!videoUrl) {
+      if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath);
+      return { erro: 'Vídeo não encontrado.' };
+    }
+
+    const { stdout: infoJson } = await execAsync(`${commonArgs} -j "${videoUrl}"`);
+    const info = JSON.parse(infoJson);
+    if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath);
+
+    return {
+      resultado: {
+        videoId: info.id,
+        title: info.title,
+        lengthSeconds: String(info.duration),
+        durationFormatted: convertSecondsToMinutes(info.duration),
+        thumbnails: [{ url: info.thumbnail, width: 1920, height: 1080 }],
+        isLiveContent: info.is_live,
+      } as any,
+    };
+  } catch (error) {
+    if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath);
+    console.error('Erro no getInfoVideoYT (yt-dlp):', error);
+    return { erro: 'Erro ao obter informações do vídeo.' };
+  }
 };
 
 export const obterYTMP3 = async (
@@ -405,37 +412,6 @@ export const obterYTMP3 = async (
   }
 };
 
-export const obterYTMP4 = async (
-  url: string,
-): Promise<{
-  resultado?: {
-    buffer: Buffer;
-    title?: string;
-    durationFormatted?: string;
-    thumbnail?: string;
-    isLiveContent?: boolean;
-  };
-  erro?: boolean;
-}> => {
-  try {
-    const data = await yt.ytmp4(url, 320);
-    console.log(data);
-    const buffer = await axios.get(data.download.url, { responseType: 'arraybuffer' });
-
-    return {
-      resultado: {
-        buffer: Buffer.from(buffer.data, 'base64'),
-        title: data.metadata.title,
-        durationFormatted: data.metadata.timestamp,
-        thumbnail: data.metadata.thumbnail,
-        isLiveContent: (data.metadata.seconds as number) > 900 ? true : false,
-      },
-    };
-  } catch (err) {
-    console.error('Erro ao baixar MP3 do YouTube:', err);
-    return { erro: true };
-  }
-};
 
 export const converterMp4ParaMp3 = async (inputBuffer: Buffer): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
@@ -530,21 +506,99 @@ export const getDataVideo = async (
   };
   erro?: boolean;
 }> => {
+  const cookiesPath = getCookiesPath();
+  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --extractor-args "youtube:player_client=web,android_vr"`;
   try {
-    const data = await yt.ytmp3(url, 320);
-    const buffer = await axios.get(data.download.url, { responseType: 'arraybuffer' });
+    // Pegar informações do vídeo
+    const { stdout: infoJson } = await execAsync(`${commonArgs} -j "${url}"`);
+    const info = JSON.parse(infoJson);
 
-    return {
-      resultado: {
-        buffer: Buffer.from(buffer.data, 'base64'),
-        title: data.metadata.title,
-        durationFormatted: data.metadata.timestamp,
-        thumbnail: data.metadata.thumbnail,
-        isLiveContent: (data.metadata.seconds as number) > 900 ? true : false,
-      },
-    };
+    // Baixar o áudio
+    return new Promise((resolve) => {
+      exec(
+        `${commonArgs} -f "ba/b" -o - "${url}"`,
+        { encoding: 'buffer', maxBuffer: 100 * 1024 * 1024 },
+        (error, stdout) => {
+          if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath);
+          if (error) {
+            console.error('Erro no yt-dlp (audio):', error);
+            return resolve({ erro: true });
+          }
+          resolve({
+            resultado: {
+              buffer: stdout,
+              title: info.title,
+              durationFormatted: convertSecondsToMinutes(info.duration),
+              thumbnail: info.thumbnail,
+              isLiveContent: info.is_live,
+            },
+          });
+        },
+      );
+    });
   } catch (error) {
-    console.error(error);
+    if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath);
+    console.error('Erro no getDataVideo (yt-dlp):', error);
+    return { erro: true };
+  }
+};
+
+export const obterYTMP4 = async (
+  url: string,
+): Promise<{
+  resultado?: {
+    buffer: Buffer;
+    title?: string;
+    durationFormatted?: string;
+    thumbnail?: string;
+    isLiveContent?: boolean;
+  };
+  erro?: boolean;
+}> => {
+  const cookiesPath = getCookiesPath();
+  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --extractor-args "youtube:player_client=web,android_vr"`;
+  try {
+    // Pegar informações do vídeo
+    const { stdout: infoJson } = await execAsync(`${commonArgs} -j "${url}"`);
+    const info = JSON.parse(infoJson);
+
+    // Baixar o vídeo para um arquivo temporário para garantir a muxagem correta (essencial para o WhatsApp)
+    const tempVideoPath = getPathTemp('mp4');
+    return new Promise((resolve) => {
+      exec(
+        `${commonArgs} -f "bv[vcodec^=avc1][height<=480]+ba[acodec^=mp4a]/b[vcodec^=avc1][height<=480]/best[height<=480]" -o "${tempVideoPath}" "${url}"`,
+        { maxBuffer: 100 * 1024 * 1024 },
+        async (error) => {
+          if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath);
+          if (error) {
+            console.error('Erro no yt-dlp (video):', error);
+            if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
+            return resolve({ erro: true });
+          }
+
+          try {
+            const videoBuffer = fs.readFileSync(tempVideoPath);
+            if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
+            resolve({
+              resultado: {
+                buffer: videoBuffer,
+                title: info.title,
+                durationFormatted: convertSecondsToMinutes(info.duration),
+                thumbnail: info.thumbnail,
+                isLiveContent: info.is_live,
+              },
+            });
+          } catch (readError) {
+            console.error('Erro ao ler arquivo de vídeo:', readError);
+            if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
+            resolve({ erro: true });
+          }
+        },
+      );
+    });
+  } catch (error) {
+    if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath);
+    console.error('Erro no obterYTMP4 (yt-dlp):', error);
     return { erro: true };
   }
 };
