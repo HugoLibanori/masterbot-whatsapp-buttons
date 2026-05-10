@@ -47,6 +47,7 @@ export const registerBotData = async (sock?: ISocket) => {
           },
         },
         commands_pv: true,
+        testers: [],
         command_rate: {
           status: false,
           max_cmds_minute: 10,
@@ -546,4 +547,30 @@ export const getTypes = async (
   const freshData = await getBotData();
   const tipos = freshData?.limite_diario?.limite_tipos;
   return tipos || {};
+};
+
+export const getTesters = async (): Promise<string[]> => {
+  const bot = await getBotData();
+  return bot?.testers || [];
+};
+
+export const addTester = async (jid: string): Promise<boolean> => {
+  const bot = await getBotData();
+  if (!bot) return false;
+  const testers = bot.testers || [];
+  if (testers.includes(jid)) return false;
+  testers.push(jid);
+  await updateBotData({ testers });
+  return true;
+};
+
+export const removeTester = async (jid: string): Promise<boolean> => {
+  const bot = await getBotData();
+  if (!bot) return false;
+  const testers = bot.testers || [];
+  const index = testers.indexOf(jid);
+  if (index === -1) return false;
+  testers.splice(index, 1);
+  await updateBotData({ testers });
+  return true;
 };

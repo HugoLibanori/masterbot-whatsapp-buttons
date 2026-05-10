@@ -87,7 +87,6 @@ export const connectWhatsapp = async (
       const { messages } = events['messages.upsert'];
       const startBot = converterDataISOParaTimestampEmSegundos(String(botInfo.started));
       for (const message of messages) {
-        if (!message.key.fromMe) continue;
         const ts = Number(message?.messageTimestamp ?? 0);
         if (Number.isFinite(ts) && ts < startBot) continue;
 

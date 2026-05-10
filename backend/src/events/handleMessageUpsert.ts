@@ -13,7 +13,7 @@ import { verificarCooldown } from '../utils/cooldownUtils.js';
 
 export const handleMessageUpsert = async (sock: ISocket, messages: types.MyWAMessage) => {
   const msg = messages;
-  if (msg.key.remoteJid !== '120363159850634529@g.us') return;
+  // if (msg.key.remoteJid !== '120363159850634529@g.us') return;
 
   const sessionName = sock.session_name;
 

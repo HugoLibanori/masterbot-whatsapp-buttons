@@ -26,6 +26,7 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
     };
   };
   declare commands_pv: boolean;
+  declare testers: string[];
   declare command_rate: {
     status: boolean;
     max_cmds_minute: number;
@@ -136,6 +137,11 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: true,
+        },
+        testers: {
+          type: DataTypes.JSON,
+          allowNull: false,
+          defaultValue: [],
         },
         command_rate: {
           type: DataTypes.JSON,
