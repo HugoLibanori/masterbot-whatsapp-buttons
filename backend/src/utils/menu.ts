@@ -451,8 +451,12 @@ menuAdmin
 ╰━━━━━━━━━━━━━╯
 
 ╭━━━ 🎚️ *CONTROLE* ━━━╮
-
+ 
 • *\`${prefixo}pvliberado\`* - _Ativa/desativa os comandos em mensagens privadas._
+
+• *\`${prefixo}gpliberado\`* - _Ativa/desativa os comandos em grupos._
+
+• *\`${prefixo}tester add/remove/list\`* - _Gerencia a lista de testadores autorizados (Whitelist)._
 
 • *\`${prefixo}autostickerpv\`* - _Ativa/desativa a criação automática de stickers no privado._
 ╰━━━━━━━━━━━━━╯
