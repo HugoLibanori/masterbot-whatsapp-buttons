@@ -54,13 +54,15 @@ const command: Command = {
           message,
         );
       let { resultado: resultadoAudio } = await api.textoParaVoz(idioma, usuarioTexto);
-      await sock.replyFileBuffer(
-        typeMessages.AUDIO,
+      const baileysSock = await sock.getInstance();
+      await baileysSock.sendMessage(
         id_chat,
-        resultadoAudio as Buffer,
-        '',
-        message,
-        'audio/mpeg',
+        { 
+          audio: resultadoAudio as Buffer, 
+          mimetype: 'audio/ogg; codecs=opus', 
+          ptt: true 
+        },
+        { quoted: message },
       );
     } catch (err: any) {
       if (!err.erro) throw err;

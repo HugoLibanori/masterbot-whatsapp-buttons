@@ -1,5 +1,5 @@
 import * as types from '../../../types/BaileysTypes/index.js';
-import gis from 'g-i-s';
+import google from 'googlethis';
 
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
 import { ISocket } from '../../../types/MyTypes/index.js';
@@ -60,7 +60,6 @@ const command: Command = {
 };
 
 export default command;
-
 const getImage = async (
   pesquisaTexto: string,
   id_chat: string,
@@ -71,53 +70,51 @@ const getImage = async (
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const imagens: any = await new Promise((resolve, reject) => {
-          gis(pesquisaTexto, (err: any, res: any) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(res);
-            }
-          });
-        });
+        const imagens = await google.image(pesquisaTexto, { safe: false });
 
-        if (imagens.length === 0) {
-          reject({ erro: 'Nenhuma imagem encontrada' });
+        if (!imagens || imagens.length === 0) {
+          return reject({ erro: 'Nenhuma imagem encontrada' });
         }
 
         resposta.resultado = [];
+        const imagensDisponiveis = [...imagens];
 
-        for (let i = imagens.length - 1; i >= 0; i--) {
+        for (let i = imagensDisponiveis.length - 1; i >= 0; i--) {
           if (resposta.resultado.length >= qtdFotos) break;
 
-          const maxFotos = imagens.length > 30 ? 30 : imagens.length;
+          const maxFotos = imagensDisponiveis.length > 30 ? 30 : imagensDisponiveis.length;
           const indexAleatorio = Math.floor(Math.random() * maxFotos);
-          const statusLink = await verifiedLink(imagens[indexAleatorio].url);
+          const imagemAtual = imagensDisponiveis[indexAleatorio];
+          
+          if (!imagemAtual || !imagemAtual.url) {
+            imagensDisponiveis.splice(indexAleatorio, 1);
+            continue;
+          }
 
-          if (!statusLink || !imagens[indexAleatorio].url.endsWith('.jpg')) continue;
+          const statusLink = await verifiedLink(imagemAtual.url);
 
-          resposta.resultado.push(imagens[indexAleatorio].url);
-          imagens.splice(indexAleatorio, 1);
+          if (!statusLink || (!imagemAtual.url.endsWith('.jpg') && !imagemAtual.url.endsWith('.png'))) {
+            imagensDisponiveis.splice(indexAleatorio, 1);
+            continue;
+          }
+
+          resposta.resultado.push(imagemAtual.url);
+          imagensDisponiveis.splice(indexAleatorio, 1);
         }
-        // if (id_chat === botInfo.grupo_oficial) {
-        //   for (const img of resposta.resultado) {
-        //     try {
-        //       const bufferImg = await axios.get(img, { responseType: "arraybuffer" });
-        //       const notSafe = await obterNsfw(bufferImg.data);
 
-        //       if (notSafe) {
-        //         return reject({ erro: "Conteúdo NSFW detectado" });
-        //       }
-        //     } catch (err) {
-        //       console.log(`Erro ao verificar imagem: ${err.message}`);
-        //     }
-        //   }
-        // }
+        if (resposta.resultado.length === 0) {
+          // Fallback caso o filtro de extensão seja muito restritivo
+          for (let i = 0; i < Math.min(qtdFotos, imagens.length); i++) {
+             if (imagens[i].url) resposta.resultado.push(imagens[i].url);
+          }
+        }
 
         resolve(resposta);
       } catch (err: any) {
         console.log(`API ObterImagens - ${err.message}`);
+        reject({ erro: 'Houve um erro ao pesquisar imagens.' });
       }
     })();
   });
 };
+

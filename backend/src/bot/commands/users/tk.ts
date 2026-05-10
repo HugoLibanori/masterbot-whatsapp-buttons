@@ -83,7 +83,7 @@ const command: Command = {
 
       const linkMidia = textReceived;
 
-      if (!/^(https?:\/\/)?(www\.)?(vm\.tiktok\.com|tiktok\.com)\/.+$/i.test(linkMidia)) {
+      if (!/^(https?:\/\/)?(www\.)?(vm\.tiktok\.com|tiktok\.com|vt\.tiktok\.com)\/.+$/i.test(linkMidia)) {
         return await sock.replyText(id_chat, textMessage.downloads.tk.msgs.erro_link, message);
       }
 
