@@ -1,3 +1,5 @@
+import dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first');
 import { startApiServer } from './api/server.js';
 
 // Inicia apenas a API. O WhatsApp é orquestrado por endpoints futuros.

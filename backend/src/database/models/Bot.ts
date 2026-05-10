@@ -26,6 +26,7 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
     };
   };
   declare commands_pv: boolean;
+  declare commands_gp: boolean;
   declare testers: string[];
   declare command_rate: {
     status: boolean;
@@ -134,6 +135,11 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
           },
         },
         commands_pv: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: true,
+        },
+        commands_gp: {
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: true,

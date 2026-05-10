@@ -20,6 +20,7 @@ export interface Bot {
     };
   };
   commands_pv: boolean;
+  commands_gp: boolean;
   testers: string[];
   command_rate: CommandRate;
   grupo_oficial: string | null;

@@ -217,6 +217,10 @@ export class Event {
     try {
       const comandos_info = commandInfo();
       await grupoController.registerGroupsInital(dadosGrupo);
+
+      // SÓ MANDA MENSAGEM SE OS GRUPOS ESTIVEREM LIBERADOS GLOBALMENTE
+      if (!this.botInfo.commands_gp) return;
+
       await socket
         .sendButtons(dadosGrupo[0].id, {
           text: createText(comandos_info.outros.entrada_grupo, dadosGrupo[0].subject),

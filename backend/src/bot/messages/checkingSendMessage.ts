@@ -53,6 +53,9 @@ export const checkingSendMessage = async (
     const isTester = (dataBot.testers || []).includes(userId!);
     if (!isGroup && !isOwnerBot && !isTester && !dataBot.commands_pv) return false;
 
+    //SE O GRUPO DO BOT NÃO ESTIVER LIBERADO
+    if (isGroup && !isOwnerBot && !dataBot.commands_gp) return false;
+
     // VERIFICANDO SE O USUARIO EXISTE E SE NÃO EXISTIR FAÇA O CADASTRO.
     const userRegister = await userController.getUser(userId!);
     const isLid = userId?.endsWith('@lid');

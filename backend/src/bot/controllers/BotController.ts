@@ -47,6 +47,7 @@ export const registerBotData = async (sock?: ISocket) => {
           },
         },
         commands_pv: true,
+        commands_gp: true,
         testers: [],
         command_rate: {
           status: false,
