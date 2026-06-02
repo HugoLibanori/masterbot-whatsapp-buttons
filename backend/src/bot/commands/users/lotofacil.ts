@@ -109,21 +109,34 @@ const command: Command = {
       }
     }
 
+    const listaJogos: number[][] = [];
     const jogos: string[] = [];
-    const jogosSet = new Set<string>();
 
     let tentativas = 0;
     const MAX_TENTATIVAS = qtd * 50;
+
+    const maxRepetidos = dezenas <= 15 ? 10 : dezenas - 3;
 
     while (jogos.length < qtd && tentativas < MAX_TENTATIVAS) {
       tentativas++;
       const jogo = inicio ? gerarJogoComSorte(dezenas, 25, inicio) : gerarJogo(dezenas, 25);
 
-      // chave lógica do jogo
-      const chave = jogo.join(',');
+      let valido = true;
+      for (const jogoExistente of listaJogos) {
+        let repetidos = 0;
+        for (const num of jogo) {
+          if (jogoExistente.includes(num)) {
+            repetidos++;
+          }
+        }
+        if (repetidos > maxRepetidos) {
+          valido = false;
+          break;
+        }
+      }
 
-      if (!jogosSet.has(chave)) {
-        jogosSet.add(chave);
+      if (valido) {
+        listaJogos.push(jogo);
         jogos.push(`*${jogos.length + 1}* - ${formatar(jogo, inicio)}`);
       }
     }
