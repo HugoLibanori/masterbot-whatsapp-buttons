@@ -102,7 +102,7 @@ const command: Command = {
 
     if (args[2]) {
       const s = Number(args[2]);
-      if (!Number.isInteger(s) && s < 1 && s > 10) {
+      if (!Number.isInteger(s) || s < 1 || s > 10) {
         await sock.replyText(id_chat, '⚠️ Número de início ignorado (fora do intervalo).', message);
       } else {
         inicio = s;
