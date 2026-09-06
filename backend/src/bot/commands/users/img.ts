@@ -1,5 +1,5 @@
 import * as types from '../../../types/BaileysTypes/index.js';
-import google from 'googlethis';
+import axios from 'axios';
 
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
 import { ISocket } from '../../../types/MyTypes/index.js';
@@ -31,7 +31,7 @@ const command: Command = {
 
     try {
       if (!args.length) return await sock.replyText(id_chat, commandErrorMsg(command), message);
-      let usuarioTexto = textReceived,
+      let usuarioTexto = textReceived?.trim() || args.join(' '),
         imagensEnviadas = 0;
       await sock.replyText(id_chat, textMessage.downloads.img.espera, message);
       let { resultado: resultadoImg } = await getImage(usuarioTexto, id_chat, botInfo);
@@ -60,61 +60,82 @@ const command: Command = {
 };
 
 export default command;
+
 const getImage = async (
   pesquisaTexto: string,
   id_chat: string,
   botInfo: Partial<Bot>,
   qtdFotos = 5,
 ): Promise<{ resultado?: string[]; erro?: string }> => {
-  let resposta: { resultado?: string[]; erro?: string } = {};
-  return new Promise((resolve, reject) => {
-    (async () => {
-      try {
-        const imagens = await google.image(pesquisaTexto, { safe: false });
+  try {
+    const res = await axios.get(
+      `https://www.bing.com/images/search?q=${encodeURIComponent(pesquisaTexto)}&form=HDRSC2&first=1`,
+      {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        },
+        timeout: 5000,
+      },
+    );
 
-        if (!imagens || imagens.length === 0) {
-          return reject({ erro: 'Nenhuma imagem encontrada' });
-        }
+    const murls: string[] = [];
+    const matches = res.data.matchAll(/murl&quot;:&quot;(https?:\/\/[^&]+)&quot;/g);
+    for (const match of matches) {
+      if (match[1]) murls.push(match[1]);
+    }
 
-        resposta.resultado = [];
-        const imagensDisponiveis = [...imagens];
-
-        for (let i = imagensDisponiveis.length - 1; i >= 0; i--) {
-          if (resposta.resultado.length >= qtdFotos) break;
-
-          const maxFotos = imagensDisponiveis.length > 30 ? 30 : imagensDisponiveis.length;
-          const indexAleatorio = Math.floor(Math.random() * maxFotos);
-          const imagemAtual = imagensDisponiveis[indexAleatorio];
-          
-          if (!imagemAtual || !imagemAtual.url) {
-            imagensDisponiveis.splice(indexAleatorio, 1);
-            continue;
-          }
-
-          const statusLink = await verifiedLink(imagemAtual.url);
-
-          if (!statusLink || (!imagemAtual.url.endsWith('.jpg') && !imagemAtual.url.endsWith('.png'))) {
-            imagensDisponiveis.splice(indexAleatorio, 1);
-            continue;
-          }
-
-          resposta.resultado.push(imagemAtual.url);
-          imagensDisponiveis.splice(indexAleatorio, 1);
-        }
-
-        if (resposta.resultado.length === 0) {
-          // Fallback caso o filtro de extensão seja muito restritivo
-          for (let i = 0; i < Math.min(qtdFotos, imagens.length); i++) {
-             if (imagens[i].url) resposta.resultado.push(imagens[i].url);
-          }
-        }
-
-        resolve(resposta);
-      } catch (err: any) {
-        console.log(`API ObterImagens - ${err.message}`);
-        reject({ erro: 'Houve um erro ao pesquisar imagens.' });
+    if (murls.length === 0) {
+      const matches2 = res.data.matchAll(/"murl":"(https?:[^"]+)"/g);
+      for (const m of matches2) {
+        if (m[1]) murls.push(m[1]);
       }
-    })();
-  });
+    }
+
+    if (murls.length === 0) {
+      return { erro: 'Nenhuma imagem encontrada' };
+    }
+
+    // Filtrar URLs diretas com extensões comuns e embaralhar candidatas
+    const candidatos = murls
+      .filter((u) => /\.(jpe?g|png|webp)($|\?)/i.test(u))
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 15);
+
+    // Validação rápida em paralelo com timeout de 1.5s
+    const checkUrl = async (url: string): Promise<string | null> => {
+      try {
+        const resp = await axios.head(url, {
+          timeout: 1500,
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          },
+        });
+        return resp.status === 200 ? url : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const validadas = (await Promise.all(candidatos.map(checkUrl))).filter(
+      (u): u is string => !!u,
+    );
+
+    let resultado = validadas.slice(0, qtdFotos);
+
+    // Fallback caso servidores tenham bloqueado requisição HEAD
+    if (resultado.length === 0) {
+      resultado = murls.slice(0, qtdFotos);
+    }
+
+    return { resultado };
+  } catch (err: any) {
+    console.log(`API ObterImagens - ${err.message}`);
+    return { erro: 'Houve um erro ao pesquisar imagens.' };
+  }
 };
 

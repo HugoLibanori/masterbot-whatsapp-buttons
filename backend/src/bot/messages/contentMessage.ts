@@ -144,9 +144,28 @@ const contentMessage = async (
       messageContent.type = type;
       messageContent.quotedMsg =
         type === typeMessages.TEXTEXT && !!msg.extendedTextMessage?.contextInfo?.quotedMessage;
+      let buttonRaw = '';
+      if (msg?.buttonsResponseMessage) {
+        const selId = msg.buttonsResponseMessage.selectedButtonId?.trim();
+        const selText = msg.buttonsResponseMessage.selectedDisplayText?.trim();
+        // Se o buttonId for um comando (ex: .menu 1), prioriza ele sobre o displayText
+        if (
+          selId &&
+          (selId.startsWith('.') ||
+            selId.startsWith('!') ||
+            selId.startsWith('#') ||
+            selId.startsWith('/'))
+        ) {
+          buttonRaw = selId;
+        } else {
+          buttonRaw = selText || selId || '';
+        }
+      }
+
       messageContent.textReceived =
-        (msg?.buttonsResponseMessage?.selectedDisplayText.toLowerCase().trim().split(' ')[1] ||
-          messageContent.textFull?.split(' ')?.slice(1)?.join(' ')?.trim()) ??
+        (buttonRaw
+          ? buttonRaw.split(' ').slice(1).join(' ').trim()
+          : messageContent.textFull?.split(' ')?.slice(1)?.join(' ')?.trim()) ??
         '';
       messageContent.pushName = message.pushName;
       messageContent.sender = getJidBySuffix(message.key, '@s.whatsapp.net');
@@ -165,18 +184,14 @@ const contentMessage = async (
       );
 
       messageContent.command =
-        (msg?.buttonsResponseMessage?.selectedDisplayText || '')
-          .toLowerCase()
-          .trim()
-          .split(' ')[0] ||
-        messageContent.textFull?.split(' ')[0]?.toLowerCase() ||
+        (buttonRaw
+          ? buttonRaw.toLowerCase().trim().split(' ')[0]
+          : messageContent.textFull?.split(' ')[0]?.toLowerCase()) ||
         '';
       messageContent.args =
-        ((msg?.buttonsResponseMessage?.selectedDisplayText || '')
-          .toLowerCase()
-          .trim()
-          .split(' ')[1] ||
-          messageContent.textFull?.split(' ').slice(1)) ??
+        (buttonRaw
+          ? buttonRaw.trim().split(' ').slice(1)
+          : messageContent.textFull?.split(' ').slice(1)) ??
         [];
       messageContent.message = msg;
       messageContent.messageMedia = type !== typeMessages.TEXT && type !== typeMessages.EXTEXT;

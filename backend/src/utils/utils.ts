@@ -562,6 +562,17 @@ export const commandGuide = async (
     }
   }
 
+  if (cmd.description) {
+    const prefix = dataBot.prefix || '';
+    return (
+      (textMessage.outros?.cabecalho_guia || '') +
+      `📌 *[Comando: ${prefix}${commandName}]*\n` +
+      `🧠 Sintaxe: *\`${prefix}${commandName}\`*\n\n` +
+      `📡 Descrição: ${cmd.description}\n` +
+      `> ⌬ Estabelecendo conexão com o servidor...`
+    );
+  }
+
   return '';
 };
 

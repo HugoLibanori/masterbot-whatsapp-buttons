@@ -11,7 +11,7 @@ const command: Command = {
   name: 'hidetag',
   description: 'Menciona todos o usuários do grupo.',
   category: 'admins',
-  aliases: ['hidetag'], // não mude o index 0 do array pode dar erro no guia dos comandos.
+  aliases: ['hidetag', 'ht', 'all'], // não mude o index 0 do array pode dar erro no guia dos comandos.
   group: true,
   admin: true,
   owner: false,
@@ -63,8 +63,8 @@ const command: Command = {
       const captionToSend = quotedMsg
         ? contentQuotedMsg?.caption
         : dataMsg.message.message.imageMessage?.caption ||
-          dataMsg.message.message.videoMessage?.caption ||
-          '';
+        dataMsg.message.message.videoMessage?.caption ||
+        '';
 
       if (dataMsg.type === typeMessages.AUDIO) {
         await sock.sendAudioWithMentions(id_chat, bufferMidia, participants);

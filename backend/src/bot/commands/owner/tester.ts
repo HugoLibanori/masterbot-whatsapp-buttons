@@ -38,14 +38,40 @@ const command: Command = {
     }
 
     const action = args[0].toLowerCase();
+
+    if (action === 'ajuda' || action === 'help') {
+      const { commandGuide } = await import('../../../utils/utils.js');
+      const guide = await commandGuide(sock, dataBot, 'tester', command);
+      await sock.replyText(
+        id_chat,
+        guide ||
+          `🧪 *Uso do comando tester:*\n- *\`${dataBot.prefix}tester add @usuario\`*\n- *\`${dataBot.prefix}tester remove @usuario\`*\n- *\`${dataBot.prefix}tester list\`*`,
+        message,
+      );
+      return;
+    }
+
+    if (action !== 'add' && action !== 'remove' && action !== 'del') {
+      await sock.replyText(
+        id_chat,
+        `❌ Ação inválida. Use:\n- *\`${dataBot.prefix}tester add @usuario\`*\n- *\`${dataBot.prefix}tester remove @usuario\`*\n- *\`${dataBot.prefix}tester list\`*`,
+        message,
+      );
+      return;
+    }
+
     let target = args[1];
 
     if (!target && message.message?.extendedTextMessage?.contextInfo?.participant) {
-        target = message.message.extendedTextMessage.contextInfo.participant;
+      target = message.message.extendedTextMessage.contextInfo.participant;
     }
 
     if (!target) {
-      await sock.replyText(id_chat, '❌ Você precisa informar um número ou marcar a mensagem de alguém.', message);
+      await sock.replyText(
+        id_chat,
+        '❌ Você precisa informar um número ou marcar a mensagem de alguém.',
+        message,
+      );
       return;
     }
 
@@ -67,8 +93,6 @@ const command: Command = {
       } else {
         await sock.replyText(id_chat, `⚠️ Este usuário não está na lista.`, message);
       }
-    } else {
-        await sock.replyText(id_chat, '❌ Ação inválida. Use `add`, `remove` ou `list`.', message);
     }
   },
 };

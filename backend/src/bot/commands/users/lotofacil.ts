@@ -115,7 +115,7 @@ const command: Command = {
     let tentativas = 0;
     const MAX_TENTATIVAS = qtd * 50;
 
-    const maxRepetidos = dezenas <= 15 ? 10 : dezenas - 3;
+    const maxRepetidos = dezenas <= 15 ? 12 : dezenas - 3;
 
     while (jogos.length < qtd && tentativas < MAX_TENTATIVAS) {
       tentativas++;

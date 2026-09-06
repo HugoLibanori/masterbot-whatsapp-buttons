@@ -84,10 +84,28 @@ const command: Command = {
     responseData += '⧖───────────────⧗\n';
 
     // Botões padrão
-    const defaultButtons: types.MyButtons['buttons'] = Array.from({ length: 5 }, (_, i) => ({
-      buttonId: `menu${i + 1}_${id_chat}`,
-      buttonText: { displayText: `${prefix}menu ${i + 1}` },
-    }));
+    const defaultButtons: types.MyButtons['buttons'] = [
+      {
+        buttonId: `${prefix}menu 1`,
+        buttonText: { displayText: 'Menu - Figurinhas' },
+      },
+      {
+        buttonId: `${prefix}menu 2`,
+        buttonText: { displayText: 'Menu - Utilidades' },
+      },
+      {
+        buttonId: `${prefix}menu 3`,
+        buttonText: { displayText: 'Menu - Downloads' },
+      },
+      {
+        buttonId: `${prefix}menu 4`,
+        buttonText: { displayText: 'Menu - Grupo' },
+      },
+      {
+        buttonId: `${prefix}menu 5`,
+        buttonText: { displayText: 'Menu - Diversão' },
+      },
+    ];
 
     const baseOptions: types.MyButtons = {
       footer: 'Digite ou aperte o botão desejado.',
@@ -97,30 +115,40 @@ const command: Command = {
     const singleButton = {
       buttons: [
         {
-          buttonId: `menu_${id_chat}`,
+          buttonId: `${prefix}menu`,
           buttonText: { displayText: `${prefix}menu` },
         },
         {
-          buttonId: `menu_${id_chat}`,
+          buttonId: `${prefix}pix`,
           buttonText: { displayText: `${prefix}pix` },
         },
       ],
       footer: 'Digite o comando desejado.',
     };
 
-    const menus = {
+    const menus: Record<string, () => string | null> = {
       '1': menu.menuFigurinhas,
+      'figurinhas': menu.menuFigurinhas,
+      'figurinha': menu.menuFigurinhas,
       '2': menu.menuUtilidades,
+      'utilidades': menu.menuUtilidades,
+      'utilidade': menu.menuUtilidades,
       '3': menu.menuDownload,
+      'download': menu.menuDownload,
+      'downloads': menu.menuDownload,
       '4': () => (isGroup ? menu.menuGrupo(isAdmin!) : null),
+      'grupo': () => (isGroup ? menu.menuGrupo(isAdmin!) : null),
+      'grupos': () => (isGroup ? menu.menuGrupo(isAdmin!) : null),
       '5': () => menu.menuDiversao(isGroup!),
+      'diversao': () => menu.menuDiversao(isGroup!),
+      'diversão': () => menu.menuDiversao(isGroup!),
     };
 
     // 🔹 Exibe menu principal
     if (!args.length) {
       baseOptions.text = responseData + menu.menuPrincipal();
       baseOptions.buttons.push({
-        buttonId: `menu_${id_chat}`,
+        buttonId: `${prefix}pix`,
         buttonText: { displayText: `${prefix}pix` },
       });
       await sock.sendButtons(id_chat, baseOptions);
@@ -128,9 +156,10 @@ const command: Command = {
     }
 
     // 🔹 Submenus
+    const opcao = (args[0] || textReceived || '').toLowerCase().trim();
     let submenu: (() => string | null) | undefined;
-    if (textReceived in menus) {
-      submenu = menus[textReceived as keyof typeof menus];
+    if (opcao in menus) {
+      submenu = menus[opcao];
     }
 
     if (!submenu) {
@@ -138,7 +167,7 @@ const command: Command = {
       return;
     }
 
-    if (textReceived === '4' && !isGroup) {
+    if ((opcao === '4' || opcao === 'grupo' || opcao === 'grupos') && !isGroup) {
       await sock.sendText(id_chat, textMessage.outros.permissao.grupo);
       return;
     }

@@ -257,7 +257,7 @@ export function commandInfo() {
         guia: `Ex: *${prefixo}pix* - Envia a chave Pix para apoiar o criador do bot.\n`,
         msgs: {
           resposta: `💰 Olá *{p1}!*
-Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Valores acima de R$2,00 reais usuário será *VIP*.\n\nAo enviar o *PIX* adicione o DDD + número na descrição do *PIX* ou envie para meu dono: @{p2}\n\nDigite ${prefixo}vantagens para saber as vantagens dos planos.`,
+Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Valores acima de R$10,00 reais usuário será *VIP*.\n\nAo enviar o *PIX* adicione o DDD + número na descrição do *PIX* ou envie para meu dono: @{p2}\n\nDigite ${prefixo}vantagens para saber as vantagens dos planos.`,
         },
       },
       vantagens: {
@@ -1154,6 +1154,26 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
         msgs: {
           desativado: '✅ Os comandos em MENSAGENS PRIVADAS foram desativados com sucesso.',
           ativado: '✅ Os comandos em MENSAGENS PRIVADAS foram ativados com sucesso.',
+        },
+      },
+      gpliberado: {
+        descricao: '',
+        guia: `👥 *[Comando: ${prefixo}gpliberado]*\n🧠 Sintaxe:\n- *\`${prefixo}gpliberado\`* - Liga/desliga os comandos em grupos.\n\n📡 Descrição: Ativa ou desativa o uso de comandos pelo bot em grupos.\n> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {
+          desativado: '🚫 *Interação em grupos DESATIVADA!* O bot agora ficará quieto em todos os grupos.',
+          ativado: '✅ *Interação em grupos ATIVADA!* Agora o bot responderá em todos os grupos.',
+        },
+      },
+      tester: {
+        descricao: '',
+        guia: `🧪 *[Comando: ${prefixo}tester]*\n🧠 Sintaxe:\n- *\`${prefixo}tester add @usuario\`* - Adiciona um usuário à lista de testadores autorizados.\n- *\`${prefixo}tester remove @usuario\`* - Remove um usuário da lista de testadores autorizados.\n- *\`${prefixo}tester list\`* - Exibe a lista de testadores cadastrados.\n\n📡 Descrição: Gerencia a lista de testadores autorizados a usar o bot no privado quando o PV estiver bloqueado (Whitelist).\n⚠️ *Obs*: Você pode marcar (@), digitar o número com DDD ou responder a uma mensagem do usuário.\n> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {
+          vazio: '📝 A lista de testadores está vazia.',
+          sucesso_add: '✅ Usuário @{p1} adicionado à lista de testadores!',
+          erro_add: '⚠️ Este usuário já está na lista ou ocorreu um erro.',
+          sucesso_remove: '🗑️ Usuário @{p1} removido da lista de testadores.',
+          erro_remove: '⚠️ Este usuário não está na lista.',
+          acao_invalida: '❌ Ação inválida. Use `add`, `remove` ou `list`.',
         },
       },
       bcmdglobal: {

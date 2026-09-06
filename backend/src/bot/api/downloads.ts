@@ -325,7 +325,7 @@ interface RespostaInfoVideo {
 
 export const getInfoVideoYT = async (texto: string): Promise<RespostaInfoVideo> => {
   const cookiesPath = getCookiesPath();
-  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --extractor-args "youtube:player_client=web,android_vr"`;
+  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"`;
   try {
     let videoUrl = texto;
     if (!texto.startsWith('http')) {
@@ -507,7 +507,7 @@ export const getDataVideo = async (
   erro?: boolean;
 }> => {
   const cookiesPath = getCookiesPath();
-  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --extractor-args "youtube:player_client=web,android_vr"`;
+  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"`;
   try {
     // Pegar informações do vídeo
     const { stdout: infoJson } = await execAsync(`${commonArgs} -j "${url}"`);
@@ -556,7 +556,7 @@ export const obterYTMP4 = async (
   erro?: boolean;
 }> => {
   const cookiesPath = getCookiesPath();
-  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --extractor-args "youtube:player_client=web,android_vr"`;
+  const commonArgs = `PATH=$PATH:/home/hugo/.nvm/versions/node/v20.19.4/bin ${YTDLP_PATH} --no-update --cookies ${cookiesPath} --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"`;
   try {
     // Pegar informações do vídeo
     const { stdout: infoJson } = await execAsync(`${commonArgs} -j "${url}"`);
