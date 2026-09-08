@@ -4,6 +4,8 @@ import { ISocket } from '../../../types/MyTypes/index.js';
 import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg, createText } from '../../../utils/utils.js';
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
+import { resolveGroupParticipant } from '../../../utils/participantUtils.js';
+import * as grupoController from '../../controllers/GrupoController.js';
 
 const command: Command = {
   name: 'promover',
@@ -34,32 +36,55 @@ const command: Command = {
       },
     } = messageContent;
 
-    let selectedUser = [],
+    let selectedUser: string[] = [],
       responseUsers = '';
-    if (mentionedJid.length > 0) selectedUser = mentionedJid;
+    if (mentionedJid.length > 0) selectedUser = [...mentionedJid];
     else if (quotedMsg) selectedUser.push(contentQuotedMsg.sender);
     else return await sock.replyText(id_chat, commandErrorMsg(command), message);
-    if (selectedUser.includes(numero_bot)) selectedUser.splice(selectedUser.indexOf(numero_bot), 1);
+
+    const validUsersToPromote: string[] = [];
+    const mentionsToSend: string[] = [];
+
     for (const usuario of selectedUser) {
-      if (!admins.includes(usuario)) {
-        await sock.promoteParticipant(id_grupo, usuario);
+      const resolved = await resolveGroupParticipant(
+        sock,
+        id_grupo,
+        usuario,
+        admins,
+        numero_bot,
+        dataBot?.number_bot,
+      );
+
+      if (resolved.isBot) {
+        continue;
+      }
+
+      validUsersToPromote.push(resolved.targetId);
+      mentionsToSend.push(resolved.targetId, usuario);
+
+      if (!resolved.isAdmin) {
+        await sock.promoteParticipant(id_grupo, resolved.targetId);
+        await grupoController.addAdmin(resolved.targetId, id_grupo);
         responseUsers += createText(
           textMessage.grupo.promover.msgs.sucesso_usuario,
-          usuario.replace('@s.whatsapp.net', ''),
+          resolved.displayMention,
         );
       } else {
         responseUsers += createText(
           textMessage.grupo.promover.msgs.erro_usuario,
-          usuario.replace('@s.whatsapp.net', ''),
+          resolved.displayMention,
         );
       }
     }
-    if (!selectedUser.length)
+
+    if (!validUsersToPromote.length && selectedUser.length > 0) {
       return await sock.replyText(id_chat, textMessage.grupo.promover.msgs.erro_bot, message);
+    }
+
     await sock.sendTextWithMentions(
       id_chat,
       createText(textMessage.grupo.promover.msgs.resposta, responseUsers),
-      selectedUser,
+      Array.from(new Set(mentionsToSend)),
     );
   },
 };

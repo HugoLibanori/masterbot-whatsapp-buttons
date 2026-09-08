@@ -1,5 +1,17 @@
 import dns from 'node:dns';
+import https from 'node:https';
+import axios from 'axios';
+
 dns.setDefaultResultOrder('ipv4first');
+axios.defaults.httpsAgent = new https.Agent({ family: 4, keepAlive: true });
+
+process.on('unhandledRejection', (reason: any) => {
+  if (reason?.message === 'Timed Out' || reason?.output?.statusCode === 408) {
+    console.warn('⚠️ [BAILEYS] Uma requisição interna ao WhatsApp expirou (Timed Out), mas a conexão segue ativa.');
+    return;
+  }
+  console.warn('⚠️ [AVISO] Rejeição de promessa interceptada:', reason?.message || reason);
+});
 
 import { connectWhatsapp } from './bootstrap/whatsapp.js';
 import fs from 'fs-extra';

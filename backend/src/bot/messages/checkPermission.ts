@@ -48,7 +48,7 @@ export const checkPermission = async (
   }
 
   if (isGroup) {
-    if (cmd.admin && !isAdmin) {
+    if (cmd.admin && !isAdmin && !isOwnerBot) {
       if (id_chat) await sock.sendText(id_chat, text.outros.permissao.apenas_admin);
       return false;
     }

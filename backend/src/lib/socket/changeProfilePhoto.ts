@@ -6,5 +6,8 @@ export async function changeProfilePhoto(
   id_chat: string,
   bufferImagem: Buffer,
 ) {
-  return await schedule(() => sock.updateProfilePicture(id_chat, bufferImagem));
+  const isGroup = id_chat && id_chat.endsWith('@g.us');
+  const ownJid = sock.user?.id || (sock as any).authState?.creds?.me?.id;
+  const targetJid = isGroup ? id_chat : (ownJid || id_chat);
+  return await schedule(() => sock.updateProfilePicture(targetJid, bufferImagem));
 }

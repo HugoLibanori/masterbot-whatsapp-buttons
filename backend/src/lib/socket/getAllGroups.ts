@@ -1,22 +1,22 @@
 import { GroupMetadata } from '@innovatorssoft/baileys';
 import * as types from '../../types/BaileysTypes/index.js';
 
-export async function getAllGroups(sock: types.MyWASocket): Promise<GroupMetadata[]> {
+export async function getAllGroups(rawSock: types.MyWASocket | any): Promise<GroupMetadata[]> {
+  const actualSock = (rawSock as any)?.sock || rawSock;
   let attempts = 0;
   const maxAttempts = 3;
 
   while (attempts < maxAttempts) {
     try {
-      // Verifica se o socket ainda existe e está conectado
-      if (!sock || (sock as any).ws?.readyState !== 1) {
+      if (!actualSock || typeof actualSock.groupFetchAllParticipating !== 'function') {
         throw new Error('Socket não está pronto ou foi fechado.');
       }
 
-      // Pequeno delay antes de tentar (especialmente importante na primeira vez logo após o 'open')
-      if (attempts === 0) await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const groups = await sock.groupFetchAllParticipating();
-      return Object.values(groups);
+      // Pequeno delay para garantir estabilidade do socket após 'open'
+      if (attempts === 0) await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const groups = await actualSock.groupFetchAllParticipating();
+      return Object.values(groups || {});
     } catch (err: any) {
       // Se a conexão foi fechada intencionalmente (como no erro 440), não adianta tentar de novo agora
       if (err.message.includes('Connection Closed') || err.message.includes('closed')) {

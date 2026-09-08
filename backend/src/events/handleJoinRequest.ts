@@ -65,11 +65,32 @@ export async function handleResponseButtonsJoinRequest(sock: ISocket, msg: types
 
   const metadata = await sock.getGroupMetadata(groupId);
 
-  const isAdmin = metadata.participants.some(
-    (member) =>
-      member.id === msg.key.participantAlt &&
-      (member.admin === 'admin' || member.admin === 'superadmin'),
-  );
+  const senderCandidates = [
+    msg.key.participant,
+    msg.key.participantAlt,
+  ]
+    .filter(Boolean)
+    .map((s) => String(s).replace(/:\d+/, ''));
+
+  const groupOwner = metadata.owner?.replace(/:\d+/, '') || '';
+  const isOwnerOfGroup =
+    Boolean(groupOwner) &&
+    (senderCandidates.includes(groupOwner) ||
+      senderCandidates.some((s) => s.split('@')[0] === groupOwner.split('@')[0]));
+
+  const isAdmin =
+    isOwnerOfGroup ||
+    metadata.participants.some((member) => {
+      const mId = member.id?.replace(/:\d+/, '');
+      const mLid = (member as any).lid?.replace(/:\d+/, '');
+      return (
+        (member.admin === 'admin' || member.admin === 'superadmin') &&
+        (senderCandidates.some((s) => s === mId || s === mLid) ||
+          senderCandidates.some(
+            (s) => s.includes('@') && mId && s.split('@')[0] === mId.split('@')[0],
+          ))
+      );
+    });
 
   const participant = buttonId.split('_')[1];
   const choice = buttonId.split('_')[0];

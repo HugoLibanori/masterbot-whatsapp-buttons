@@ -4,6 +4,7 @@ import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
 import { ISocket } from '../../../types/MyTypes/index.js';
 import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg, createText } from '../../../utils/utils.js';
+import { resolveGroupParticipant } from '../../../utils/participantUtils.js';
 
 const command: Command = {
   name: 'ban',
@@ -25,7 +26,7 @@ const command: Command = {
 
     const {
       mentionedJid,
-      dataBd: { participantes, admins },
+      dataBd: { admins },
       id_group,
     } = grupo;
 
@@ -34,37 +35,46 @@ const command: Command = {
     if (quotedMsg) {
       arrayNumber.push(contentQuotedMsg.sender);
     } else if (mentionedJid.length > 0) {
-      const mentioned = mentionedJid[0];
-      const cleanNumber = mentioned.replace(/\D+/g, '');
-      arrayNumber.push(cleanNumber + '@s.whatsapp.net');
+      arrayNumber.push(...mentionedJid);
     } else {
       return await sock.replyText(id_chat, commandErrorMsg(command), message);
     }
 
-    const idPartipants = participantes;
-
     for (const usuario of arrayNumber) {
-      if (idPartipants.includes(usuario)) {
-        if (!admins.includes(usuario)) {
-          await sock.removerParticipant(id_group, usuario).then(async () => {
-            if (arrayNumber.length === 1) {
-              await sock.sendTextWithMentions(
-                id_chat,
-                createText(
-                  textMessage.outros.resposta_ban,
-                  usuario.replace('@s.whatsapp.net', ''),
-                  textMessage.grupo.ban.msgs.motivo,
-                  sender.replace('@s.whatsapp.net', ''),
-                ),
-                [sender, usuario],
-              );
-            }
-          });
-        } else {
-          if (arrayNumber.length === 1)
-            await sock.replyText(id_chat, textMessage.grupo.ban.msgs.banir_admin, message);
+      const resolved = await resolveGroupParticipant(
+        sock,
+        id_group,
+        usuario,
+        admins,
+        messageContent.numberBot,
+        dataBot?.number_bot,
+      );
+
+      if (resolved.isBot) {
+        continue;
+      }
+
+      if (resolved.isAdmin) {
+        if (arrayNumber.length === 1)
+          await sock.replyText(id_chat, textMessage.grupo.ban.msgs.banir_admin, message);
+        continue;
+      }
+
+      try {
+        await sock.removerParticipant(id_group, resolved.targetId);
+        if (arrayNumber.length === 1) {
+          await sock.sendTextWithMentions(
+            id_chat,
+            createText(
+              textMessage.outros.resposta_ban,
+              resolved.displayMention,
+              textMessage.grupo.ban.msgs.motivo,
+              sender.replace(/@s\.whatsapp\.net|@lid/, ''),
+            ),
+            [sender, resolved.targetId, usuario],
+          );
         }
-      } else {
+      } catch {
         if (arrayNumber.length === 1)
           await sock.replyText(id_chat, textMessage.grupo.ban.msgs.banir_erro, message);
       }

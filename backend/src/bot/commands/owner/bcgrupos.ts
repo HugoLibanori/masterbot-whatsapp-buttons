@@ -27,7 +27,7 @@ const command: Command = {
 
     if (!args.length) return await sock.replyText(id_chat, commandErrorMsg(command), message);
     let announcementMessage = textReceived,
-      Currentgroups = await grupoController.getAllGroups();
+      Currentgroups = await grupoController.getAllGroups(sock);
     await sock.replyText(
       id_chat,
       createText(

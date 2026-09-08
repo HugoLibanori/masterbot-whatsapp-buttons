@@ -1,3 +1,4 @@
+import https from 'https';
 import { downloadMediaMessage } from '@innovatorssoft/baileys';
 import * as types from '../../../types/BaileysTypes/index.js';
 
@@ -5,6 +6,8 @@ import { commandErrorMsg } from '../../../utils/utils.js';
 import { ISocket } from '../../../types/MyTypes/index.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
+
+const ipv4Agent = new https.Agent({ family: 4 });
 
 const command: Command = {
   name: 'fotogrupo',
@@ -37,7 +40,12 @@ const command: Command = {
         const bufferPhoto = await downloadMediaMessage(
           dataMsg.message as types.MyWAMessage,
           'buffer',
-          {},
+          {
+            options: {
+              httpsAgent: ipv4Agent,
+            },
+            agent: ipv4Agent,
+          } as any,
         );
         await sock.changeProfilePhoto(id_chat, bufferPhoto);
         await sock.sendText(id_chat, textMessage.grupo.fotogrupo.msgs.sucesso);

@@ -26,7 +26,42 @@ const command: Command = {
     const { id_chat, numberBot } = messageContent;
     const { prefix } = dataBot;
 
-    let currentGroups = await grupoController.getAllGroups(),
+    // Identificadores possíveis do bot
+    const botIds = new Set<string>();
+    if (numberBot) {
+      botIds.add(numberBot);
+      botIds.add(numberBot.replace(/:\d+@/, '@'));
+      botIds.add(numberBot.split('@')[0].replace(/\D/g, ''));
+    }
+    const sockUser = (sock as any)?.sock?.user || (sock as any)?.user;
+    if (sockUser?.id) {
+      botIds.add(sockUser.id);
+      botIds.add(sockUser.id.replace(/:\d+@/, '@'));
+      botIds.add(sockUser.id.split('@')[0].replace(/\D/g, ''));
+    }
+    if (sockUser?.lid) {
+      botIds.add(sockUser.lid);
+      botIds.add(sockUser.lid.replace(/:\d+@/, '@'));
+      botIds.add(sockUser.lid.split('@')[0].replace(/\D/g, ''));
+    }
+    const credsMe = (sock as any)?.sock?.authState?.creds?.me;
+    if (credsMe?.id) {
+      botIds.add(credsMe.id);
+      botIds.add(credsMe.id.replace(/:\d+@/, '@'));
+      botIds.add(credsMe.id.split('@')[0].replace(/\D/g, ''));
+    }
+    if (credsMe?.lid) {
+      botIds.add(credsMe.lid);
+      botIds.add(credsMe.lid.replace(/:\d+@/, '@'));
+      botIds.add(credsMe.lid.split('@')[0].replace(/\D/g, ''));
+    }
+    if (dataBot?.number_bot) {
+      botIds.add(dataBot.number_bot);
+      botIds.add(dataBot.number_bot.replace(/:\d+@/, '@'));
+      botIds.add(dataBot.number_bot.split('@')[0].replace(/\D/g, ''));
+    }
+
+    let currentGroups = await grupoController.getAllGroups(sock),
       resposta = createText(
         textMessage.admin.grupos.msgs.resposta_titulo,
         currentGroups.length.toString(),
@@ -34,14 +69,25 @@ const command: Command = {
     let numGrupo = 0;
     for (let grupo of currentGroups) {
       numGrupo++;
-      let adminsGrupo = grupo.admins;
-      let botAdmin = adminsGrupo.includes(numberBot);
+      let adminsGrupo = Array.isArray(grupo.admins)
+        ? Array.from(new Set(grupo.admins.filter(Boolean)))
+        : [];
+      let participantesGrupo = Array.isArray(grupo.participantes)
+        ? Array.from(new Set(grupo.participantes.filter(Boolean)))
+        : [];
+
+      let botAdmin = adminsGrupo.some((admin: string) => {
+        if (!admin) return false;
+        const cleanAdmin = admin.replace(/:\d+@/, '@');
+        const digits = admin.split('@')[0].replace(/\D/g, '');
+        return botIds.has(admin) || botIds.has(cleanAdmin) || (digits && botIds.has(digits));
+      });
       let comandoLink = botAdmin ? `${prefix}linkgrupo ${numGrupo}` : '----';
       resposta += createText(
         textMessage.admin.grupos.msgs.resposta_itens,
         numGrupo.toString(),
         grupo.nome,
-        grupo.participantes.length.toString(),
+        participantesGrupo.length.toString(),
         adminsGrupo.length.toString(),
         botAdmin ? 'Sim' : 'Não',
         comandoLink,

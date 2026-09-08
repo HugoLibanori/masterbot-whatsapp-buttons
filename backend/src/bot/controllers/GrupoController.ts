@@ -1,6 +1,6 @@
 import { downloadMediaMessage, GroupMetadata, ParticipantAction } from '@innovatorssoft/baileys';
 import moment from 'moment-timezone';
-import Sequelize from 'sequelize';
+import Sequelize, { Op } from 'sequelize';
 
 import * as types from '../../types/BaileysTypes/index.js';
 import Grupos from '../../database/models/Grupo.js';
@@ -54,22 +54,27 @@ iniciarLimpezaFlood();
 export const registerGroupsInital = async (groupInfo: GroupMetadata[]): Promise<void> => {
   if (groupInfo.length) {
     try {
+      const activeGroupIds = groupInfo.map((g) => g.id);
+
       for (const grupo of groupInfo) {
+        const { participants } = grupo;
+        const participantes: string[] = Array.from(
+          new Set((participants || []).map((p) => p.id).filter(Boolean)),
+        );
+        const admins = Array.from(
+          new Set(
+            (participants || [])
+              .filter((participant) => participant.admin !== null && participant.admin !== undefined)
+              .map((participant) => participant.id)
+              .filter(Boolean),
+          ),
+        );
+
         const group = await Grupos.findOne({ where: { id_grupo: grupo.id } });
         if (!group) {
-          const { participants } = grupo;
-          const participantes: string[] = [];
-          participants.forEach((participant) => {
-            participantes.push(participant.id);
-          });
-
-          const admins = participants
-            .filter((participant) => participant.admin !== null)
-            .map((participant) => participant.id ?? '');
-
           const dataGroup = {
             id_grupo: grupo.id,
-            nome: grupo.subject,
+            nome: grupo.subject || '',
             dono: grupo.owner ?? '',
             participantes,
             admins,
@@ -96,8 +101,28 @@ export const registerGroupsInital = async (groupInfo: GroupMetadata[]): Promise<
             openai: { status: false },
           };
           await Grupos.create(dataGroup);
+        } else {
+          await Grupos.update(
+            {
+              nome: grupo.subject || group.nome,
+              dono: grupo.owner ?? group.dono,
+              participantes,
+              admins,
+              descricao: grupo.desc ?? group.descricao,
+            },
+            { where: { id_grupo: grupo.id } },
+          );
         }
       }
+
+      // Remove grupos que o bot NÃO está mais participando
+      await Grupos.destroy({
+        where: {
+          id_grupo: {
+            [Op.notIn]: activeGroupIds,
+          },
+        },
+      });
     } catch (error) {
       console.log(error);
     }
@@ -648,7 +673,41 @@ export const getActiveParticipants = async (id_grupo: string, qtd: number): Prom
   return ativosNoGrupo.length >= qtd ? ativosNoGrupo.slice(0, qtd) : ativosNoGrupo;
 };
 
-export const getAllGroups = async (): Promise<Grupos[]> => {
+export const getAllGroups = async (sock?: ISocket): Promise<Grupos[]> => {
+  if (sock) {
+    try {
+      let liveGroups = await sock.getAllGroups();
+      if (!liveGroups || liveGroups.length === 0) {
+        const cachedKeys = groupCache.keys();
+        liveGroups = cachedKeys
+          .map((k) => groupCache.get(k))
+          .filter((g): g is types.MyGroupMetadata => Boolean(g));
+      }
+
+      if (liveGroups && liveGroups.length > 0) {
+        const freshMetadataList: types.MyGroupMetadata[] = [];
+        for (const g of liveGroups) {
+          try {
+            const fresh = await sock.getGroupMetadata(g.id);
+            if (fresh && fresh.participants && fresh.participants.length > 0) {
+              freshMetadataList.push(fresh);
+              groupCache.set(g.id, fresh);
+            } else {
+              freshMetadataList.push(g);
+            }
+          } catch {
+            freshMetadataList.push(g);
+          }
+        }
+
+        if (freshMetadataList.length > 0) {
+          await registerGroupsInital(freshMetadataList);
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Erro ao sincronizar grupos via sock em getAllGroups:', e);
+    }
+  }
   return await Grupos.findAll();
 };
 

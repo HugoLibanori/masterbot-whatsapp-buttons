@@ -240,24 +240,140 @@ const contentMessage = async (
       };
       let groupMetadata = groupCache.get(id_group) as types.MyGroupMetadata | undefined;
 
-      if (!groupMetadata) {
-        groupMetadata = await sock.groupMetadata(id_group);
-        groupCache.set(id_group, groupMetadata);
+      if (!groupMetadata || !groupMetadata.participants || groupMetadata.participants.length === 0) {
+        try {
+          groupMetadata = await sock.groupMetadata(id_group);
+          if (groupMetadata) groupCache.set(id_group, groupMetadata);
+        } catch (err) {
+          // Mantém o que tiver se falhar
+        }
       }
-      const participant = groupMetadata.participants.find(
-        (p) => p.id === message.key?.participantAlt?.replace(/:\d+/, ''),
-      );
+
+      const senderCandidates = [
+        messageContent.sender,
+        messageContent.senderLid,
+        message.key?.participant,
+        message.key?.participantAlt,
+      ]
+        .filter(Boolean)
+        .map((s) => String(s).replace(/:\d+@/, '@').replace(/:\d+$/, ''));
+      const senderDigits = senderCandidates.map((s) => s.replace(/\D+/g, '')).filter(Boolean);
+
+      const botRawCandidates = [
+        sock.user?.id,
+        sock.user?.lid,
+        (sock as any).authState?.creds?.me?.id,
+        (sock as any).authState?.creds?.me?.lid,
+        numberBot,
+      ].filter(Boolean) as string[];
+
+      const botJids = botRawCandidates.map((s) => s.replace(/:\d+@/, '@').replace(/:\d+$/, ''));
+      const botDigits = botRawCandidates.map((s) => s.replace(/\D+/g, '')).filter(Boolean);
+
+      const isMatchUser = (p: types.MyGroupParticipant) => {
+        const pId = p.id?.replace(/:\d+@/, '@').replace(/:\d+$/, '');
+        const pLid = (p as any).lid?.replace(/:\d+@/, '@').replace(/:\d+$/, '');
+        const pPhone = (p as any).phoneNumber?.replace(/:\d+@/, '@').replace(/:\d+$/, '');
+
+        const pIdentifiers = [pId, pLid, pPhone].filter(Boolean) as string[];
+        const pDigitsList = [p.id, (p as any).lid, (p as any).phoneNumber]
+          .map((x) => String(x || '').replace(/\D+/g, ''))
+          .filter(Boolean);
+
+        const matchesJid = senderCandidates.some((s) =>
+          pIdentifiers.some(
+            (pid) =>
+              s === pid ||
+              (s.includes('@') && pid.includes('@') && s.split('@')[0] === pid.split('@')[0]),
+          ),
+        );
+        if (matchesJid) return true;
+
+        return senderDigits.some((sd) => pDigitsList.some((pd) => sd === pd));
+      };
+
+      const isMatchBot = (p: types.MyGroupParticipant) => {
+        const pId = p.id?.replace(/:\d+@/, '@').replace(/:\d+$/, '');
+        const pLid = (p as any).lid?.replace(/:\d+@/, '@').replace(/:\d+$/, '');
+        const pPhone = (p as any).phoneNumber?.replace(/:\d+@/, '@').replace(/:\d+$/, '');
+
+        const pIdentifiers = [pId, pLid, pPhone].filter(Boolean) as string[];
+        const pDigitsList = [p.id, (p as any).lid, (p as any).phoneNumber]
+          .map((x) => String(x || '').replace(/\D+/g, ''))
+          .filter(Boolean);
+
+        const matchesJid = botJids.some((b) =>
+          pIdentifiers.some(
+            (pid) =>
+              b === pid ||
+              (b.includes('@') && pid.includes('@') && b.split('@')[0] === pid.split('@')[0]),
+          ),
+        );
+        if (matchesJid) return true;
+
+        return botDigits.some((bd) => pDigitsList.some((pd) => bd === pd));
+      };
+
+      let groupOwner = (groupMetadata?.owner || '').replace(/:\d+@/, '@').replace(/:\d+$/, '');
+      let isOwnerOfGroup =
+        Boolean(groupOwner) &&
+        (senderCandidates.includes(groupOwner) ||
+          senderDigits.some((sd) => sd === groupOwner.replace(/\D+/g, '')));
+
+      let participant = groupMetadata?.participants?.find(isMatchUser);
+      let isUserAdmin =
+        isOwnerOfGroup || participant?.admin === 'admin' || participant?.admin === 'superadmin';
+
+      let botParticipant = groupMetadata?.participants?.find(isMatchBot);
+      let isBotAdmin =
+        botParticipant?.admin === 'admin' ||
+        botParticipant?.admin === 'superadmin' ||
+        (Boolean(groupOwner) &&
+          (botJids.includes(groupOwner) ||
+            botDigits.some((d) => d === groupOwner.replace(/\D+/g, ''))));
+
+      // Se ainda não identificou como admin do usuário OU o bot não foi identificado como admin,
+      // busca metadados frescos do WhatsApp para atualizar o cache
+      if (!isUserAdmin || !isBotAdmin) {
+        try {
+          const freshMetadata = await sock.groupMetadata(id_group);
+          if (freshMetadata && freshMetadata.participants?.length) {
+            groupMetadata = freshMetadata;
+            groupCache.set(id_group, freshMetadata);
+
+            groupOwner = (freshMetadata.owner || '').replace(/:\d+@/, '@').replace(/:\d+$/, '');
+            isOwnerOfGroup =
+              Boolean(groupOwner) &&
+              (senderCandidates.includes(groupOwner) ||
+                senderDigits.some((sd) => sd === groupOwner.replace(/\D+/g, '')));
+
+            participant = freshMetadata.participants.find(isMatchUser);
+            isUserAdmin =
+              isOwnerOfGroup ||
+              participant?.admin === 'admin' ||
+              participant?.admin === 'superadmin';
+
+            botParticipant = freshMetadata.participants.find(isMatchBot);
+            isBotAdmin =
+              botParticipant?.admin === 'admin' ||
+              botParticipant?.admin === 'superadmin' ||
+              (Boolean(groupOwner) &&
+                (botJids.includes(groupOwner) ||
+                  botDigits.some((d) => d === groupOwner.replace(/\D+/g, ''))));
+          }
+        } catch (e) {
+          // Ignora erro
+        }
+      }
+
       Object.assign(messageContent.grupo, {
         id_group: groupMetadata?.id ?? '',
-        name: groupMetadata.subject ?? '',
-        description: groupMetadata.desc ?? '',
-        participants: groupMetadata.participants.map((p) => p.id) ?? [],
-        owner: groupMetadata.owner?.replace(/:\d+/, '') ?? '',
-        isBotAdmin: (() => {
-          const bot = groupMetadata.participants.find((p) => p.lid === numberBot);
-          return bot?.admin === 'admin' || bot?.admin === 'superadmin';
-        })(),
-        isAdmin: participant?.admin === 'admin' || participant?.admin === 'superadmin',
+        name: groupMetadata?.subject ?? '',
+        description: groupMetadata?.desc ?? '',
+        participants: groupMetadata?.participants?.map((p) => p.id) ?? [],
+        owner: groupOwner,
+        isBotAdmin,
+        isAdmin: isUserAdmin,
         mentionedJid: content?.contextInfo?.mentionedJid ?? [],
         dataBd: groupInfo,
       });

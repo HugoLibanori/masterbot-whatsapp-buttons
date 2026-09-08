@@ -6,8 +6,9 @@ export async function removerParticipant(
   id_grupo: string,
   participante: string,
 ) {
+  const cleanParticipant = participante.replace(/:\d+@/, '@');
   const resposta = await schedule(() =>
-    sock.groupParticipantsUpdate(id_grupo, [participante], 'remove'),
+    sock.groupParticipantsUpdate(id_grupo, [cleanParticipant], 'remove'),
   );
   return resposta[0];
 }

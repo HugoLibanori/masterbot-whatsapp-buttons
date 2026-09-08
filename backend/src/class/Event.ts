@@ -192,7 +192,15 @@ export class Event {
 
         // Cache
         if (groupInCache) {
-          const p = groupInCache.participants.find((p) => p.id === participantId);
+          const cleanPart = participantId.replace(/:\d+@/, '@');
+          const partDigits = participantId.replace(/\D+/g, '');
+          const p = groupInCache.participants.find(
+            (p) =>
+              p.id === participantId ||
+              p.id?.replace(/:\d+@/, '@') === cleanPart ||
+              (p as any).lid?.replace(/:\d+@/, '@') === cleanPart ||
+              (Boolean(partDigits) && p.id?.replace(/\D+/g, '') === partDigits),
+          );
           if (p) p.admin = 'admin';
           groupCache.set(event.id, groupInCache);
         }
@@ -202,7 +210,15 @@ export class Event {
 
         // Cache
         if (groupInCache) {
-          const p = groupInCache.participants.find((p) => p.id === participantId);
+          const cleanPart = participantId.replace(/:\d+@/, '@');
+          const partDigits = participantId.replace(/\D+/g, '');
+          const p = groupInCache.participants.find(
+            (p) =>
+              p.id === participantId ||
+              p.id?.replace(/:\d+@/, '@') === cleanPart ||
+              (p as any).lid?.replace(/:\d+@/, '@') === cleanPart ||
+              (Boolean(partDigits) && p.id?.replace(/\D+/g, '') === partDigits),
+          );
           if (p) p.admin = null;
           groupCache.set(event.id, groupInCache);
         }

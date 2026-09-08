@@ -28,7 +28,7 @@ const command: Command = {
     const numberOwner = await userController.getOwner();
 
     if (args.length) {
-      const Currentgroups = await grupoController.getAllGroups();
+      const Currentgroups = await grupoController.getAllGroups(sock);
       let indexGroup = Number(textReceived);
       if (isNaN(indexGroup))
         return await sock.replyText(id_chat, textMessage.admin.sair.msgs.nao_encontrado, message);

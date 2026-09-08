@@ -1,3 +1,4 @@
+import https from 'https';
 import * as types from '../../../types/BaileysTypes/index.js';
 import { downloadMediaMessage } from '@innovatorssoft/baileys';
 
@@ -6,6 +7,8 @@ import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
+
+const ipv4Agent = new https.Agent({ family: 4 });
 
 const command: Command = {
   name: 'fotobot',
@@ -32,21 +35,63 @@ const command: Command = {
       command,
       mimetype,
       type,
-      numberBot,
     } = messageContent;
 
     if (!messageMedia && !quotedMsg)
       return await sock.replyText(id_chat, commandErrorMsg(command), message);
+
     const dadosMensagem = {
-      tipo: messageMedia ? type : contentQuotedMsg.type,
-      mimetype: messageMedia ? mimetype : contentQuotedMsg.mimetype,
-      mensagem: messageMedia ? message : contentQuotedMsg.message,
+      tipo: quotedMsg ? contentQuotedMsg?.type : type,
+      mimetype: quotedMsg ? contentQuotedMsg?.mimetype : mimetype,
+      mensagem: quotedMsg ? (contentQuotedMsg?.message ?? message) : message,
     };
+
     if (dadosMensagem.tipo !== typeMessages.IMAGE || !dadosMensagem.mensagem)
       return await sock.replyText(id_chat, commandErrorMsg(command), message);
-    const fotoBuffer = await downloadMediaMessage(dadosMensagem.mensagem, 'buffer', {});
-    await sock.changeProfilePhoto(numberBot, fotoBuffer);
-    await sock.replyText(id_chat, textMessage.admin.fotobot.msgs.sucesso, message);
+
+    try {
+      const fotoBuffer = await downloadMediaMessage(
+        dadosMensagem.mensagem,
+        'buffer',
+        {
+          options: {
+            httpsAgent: ipv4Agent,
+          },
+          agent: ipv4Agent,
+        } as any,
+      );
+
+      if (!fotoBuffer) {
+        return await sock.replyText(
+          id_chat,
+          '❌ Não foi possível baixar a imagem. Envie novamente.',
+          message,
+        );
+      }
+
+      await sock.changeProfilePhoto('', fotoBuffer);
+      await sock.replyText(id_chat, textMessage.admin.fotobot.msgs.sucesso, message);
+    } catch (err: any) {
+      console.error('Erro ao atualizar foto do bot:', err);
+      const isTimeout =
+        err?.output?.statusCode === 408 ||
+        err?.message?.includes('Timed Out') ||
+        err?.message?.includes('timed out');
+
+      if (isTimeout) {
+        await sock.replyText(
+          id_chat,
+          '⚠️ O WhatsApp demorou para confirmar a alteração de foto. Verifique seu perfil do bot em alguns segundos.',
+          message,
+        );
+      } else {
+        await sock.replyText(
+          id_chat,
+          '❌ Houve um erro ao atualizar a foto do bot. Verifique os logs do sistema.',
+          message,
+        );
+      }
+    }
   },
 };
 

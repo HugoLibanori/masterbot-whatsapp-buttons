@@ -4,6 +4,8 @@ import { ISocket } from '../../../types/MyTypes/index.js';
 import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg, createText } from '../../../utils/utils.js';
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
+import { resolveGroupParticipant } from '../../../utils/participantUtils.js';
+import * as grupoController from '../../controllers/GrupoController.js';
 
 const command: Command = {
   name: 'rebaixar',
@@ -35,32 +37,55 @@ const command: Command = {
       },
     } = messageContent;
 
-    let selectedUser = [],
+    let selectedUser: string[] = [],
       responseUsers = '';
-    if (mentionedJid.length > 0) selectedUser = mentionedJid;
+    if (mentionedJid.length > 0) selectedUser = [...mentionedJid];
     else if (quotedMsg) selectedUser.push(contentQuotedMsg.sender);
     else return await sock.replyText(id_chat, commandErrorMsg(command), message);
-    if (selectedUser.includes(numberBot)) selectedUser.splice(selectedUser.indexOf(numberBot), 1);
+
+    const validUsersToDemote: string[] = [];
+    const mentionsToSend: string[] = [];
+
     for (const usuario of selectedUser) {
-      if (admins.includes(usuario)) {
-        await sock.demoteParticipant(id_group, usuario);
+      const resolved = await resolveGroupParticipant(
+        sock,
+        id_group,
+        usuario,
+        admins,
+        numberBot,
+        dataBot?.number_bot,
+      );
+
+      if (resolved.isBot) {
+        continue;
+      }
+
+      validUsersToDemote.push(resolved.targetId);
+      mentionsToSend.push(resolved.targetId, usuario);
+
+      if (resolved.isAdmin) {
+        await sock.demoteParticipant(id_group, resolved.targetId);
+        await grupoController.removeAdmin(resolved.targetId, id_group);
         responseUsers += createText(
           textMessage.grupo.rebaixar.msgs.sucesso_usuario,
-          usuario.replace('@s.whatsapp.net', ''),
+          resolved.displayMention,
         );
       } else {
         responseUsers += createText(
           textMessage.grupo.rebaixar.msgs.erro_usuario,
-          usuario.replace('@s.whatsapp.net', ''),
+          resolved.displayMention,
         );
       }
     }
-    if (!selectedUser.length)
+
+    if (!validUsersToDemote.length && selectedUser.length > 0) {
       return await sock.replyText(id_chat, textMessage.grupo.rebaixar.msgs.erro_bot, message);
+    }
+
     await sock.sendTextWithMentions(
       id_chat,
       createText(textMessage.grupo.rebaixar.msgs.resposta, responseUsers),
-      selectedUser,
+      Array.from(new Set(mentionsToSend)),
     );
   },
 };
