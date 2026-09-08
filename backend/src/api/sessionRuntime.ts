@@ -10,6 +10,10 @@ export function getSocket(session: string): WASocket | undefined {
   return sockets.get(session);
 }
 
+export function getAllSockets(): Map<string, WASocket> {
+  return sockets;
+}
+
 export async function stopSession(session: string): Promise<boolean> {
   const sock = sockets.get(session);
   if (!sock) return false;

@@ -109,14 +109,18 @@ export const checkingSendMessage = async (
     // VERIFICANDO EXPIRAÇÃO DO PLANO ATIVO DO USUÁRIO
     await userController.checkUserExpiration(userId!);
 
+    // VERIFICANDO SE O GRUPO POSSUI PLANO ATIVO (ACESSO ILIMITADO PARA TODOS OS MEMBROS DO GRUPO)
+    const isGroupPlanActive = isGroup && id_group ? await grupoController.checkGroupPlanExpiration(id_group) : false;
+
     if (existCommands.exists || autostickerpv || autostickergp) {
       // Marcar como lida somente quando vamos responder/agir
       await sock.readMessage(message.key);
 
       if (dataBot?.command_rate?.status) {
+        const tipoEfetivo = isGroupPlanActive ? 'vip' : (dataUser?.tipo ?? 'comum');
         let limiteComando = await botController.checkLimitCommand(
           userId!,
-          dataUser?.tipo ?? 'comum',
+          tipoEfetivo,
           isAdmin,
           dataBot,
         );
@@ -149,7 +153,8 @@ export const checkingSendMessage = async (
         return false;
       }
       //SE O RECURSO DE LIMITADOR DIARIO DE COMANDOS ESTIVER ATIVADO E O COMANDO NÃO ESTIVER NA LISTA DE EXCEÇÔES/INFO/GRUPO/ADMIN
-      if (dataBot.limite_diario?.status) {
+      // Se o grupo tem plano ativo liberado, membros no grupo têm comandos ilimitados!
+      if (dataBot.limite_diario?.status && !isGroupPlanActive) {
         await botController.checkExpirationLimit(dataBot);
         if ((existCommands.exists && !msgGuia) || autostickerpv || autostickergp) {
           let ultrapassou = await userController.verificarUltrapassouLimiteComandos(

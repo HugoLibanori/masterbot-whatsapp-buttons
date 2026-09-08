@@ -9,6 +9,7 @@ import { ISocket } from '../../../types/MyTypes/index.js';
 import { commandErrorMsg, createText } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import * as types from '../../../types/BaileysTypes/index.js';
+import { downloadQueue } from '../../../utils/downloadQueue.js';
 
 const command: Command = {
   name: 'fb',
@@ -44,23 +45,38 @@ const command: Command = {
       ) {
         return await sock.replyText(id_chat, textMessage.downloads.fb.msgs.erro_link, message);
       }
-      const { resultado: resultadoFB } = await getMediaFacebook(usuarioURL);
-      if (!resultadoFB) return;
-      if (resultadoFB.duration > 300000)
-        return await sock.replyText(id_chat, textMessage.downloads.fb.msgs.limite, message);
-      const mensagemEspera = createText(
-        textMessage.downloads.fb.msgs.espera,
-        resultadoFB.title,
-        duration.default(String(resultadoFB.duration).replace('.', '')).format('m:ss'),
-      );
-      await sock.replyText(id_chat, mensagemEspera, message);
-      await sock.replyFileBuffer(
-        typeMessages.VIDEO,
-        id_chat,
-        resultadoFB.buffer,
-        '',
-        message,
-        'video/mp4',
+      await downloadQueue.enqueue(
+        'facebook',
+        'Facebook',
+        async () => {
+          const { resultado: resultadoFB } = await getMediaFacebook(usuarioURL);
+          if (!resultadoFB) return;
+          if (resultadoFB.duration > 300000)
+            return await sock.replyText(id_chat, textMessage.downloads.fb.msgs.limite, message);
+          const mensagemEspera = createText(
+            textMessage.downloads.fb.msgs.espera,
+            resultadoFB.title,
+            duration.default(String(resultadoFB.duration).replace('.', '')).format('m:ss'),
+          );
+          await sock.replyText(id_chat, mensagemEspera, message);
+          await sock.replyFileBuffer(
+            typeMessages.VIDEO,
+            id_chat,
+            resultadoFB.buffer,
+            '',
+            message,
+            'video/mp4',
+          );
+        },
+        {
+          onWaiting: async (pos, name) => {
+            await sock.replyText(
+              id_chat,
+              `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 downloads em andamento. Seu pedido está na fila na posição *#${pos}* e começará automaticamente assim que liberar um slot!`,
+              message,
+            );
+          },
+        },
       );
     } catch (err: any) {
       if (!err.erro) throw err;

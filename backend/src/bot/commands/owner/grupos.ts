@@ -83,6 +83,19 @@ const command: Command = {
         return botIds.has(admin) || botIds.has(cleanAdmin) || (digits && botIds.has(digits));
       });
       let comandoLink = botAdmin ? `${prefix}linkgrupo ${numGrupo}` : '----';
+
+      let statusPlanoStr = '⚪ Inativo';
+      if (grupo.plano_ativo && grupo.expira_em) {
+        const agora = new Date();
+        const expira = new Date(grupo.expira_em);
+        if (expira > agora) {
+          const diffDays = Math.ceil((expira.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24));
+          statusPlanoStr = `👑 Ativo (${diffDays}d restantes)`;
+        } else {
+          statusPlanoStr = '⚠️ Expirado';
+        }
+      }
+
       resposta += createText(
         textMessage.admin.grupos.msgs.resposta_itens,
         numGrupo.toString(),
@@ -92,6 +105,7 @@ const command: Command = {
         botAdmin ? 'Sim' : 'Não',
         comandoLink,
       );
+      resposta += `*Plano* : ${statusPlanoStr}\n`;
     }
     await sock.replyText(id_chat, resposta, message);
   },

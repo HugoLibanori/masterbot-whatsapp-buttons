@@ -45,6 +45,8 @@ export interface Grupo {
   lista_negra: string[];
   descricao: string;
   openai: { status: boolean };
+  plano_ativo?: boolean;
+  expira_em?: Date | null;
 }
 
 export interface DataGrupoInitial {

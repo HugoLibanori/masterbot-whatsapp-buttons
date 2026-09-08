@@ -1,4 +1,5 @@
 import Sequelize, { Op } from 'sequelize';
+import moment from 'moment-timezone';
 
 import Users from '../../database/models/User.js';
 import { User } from '../../interfaces/index.js';
@@ -63,7 +64,28 @@ export const getUser = async (id: string) => {
     },
   });
 
-  return user?.get({ plain: true });
+  if (!user) return null;
+  const plain = user.get({ plain: true });
+
+  // Se o usuário possui comandos_dia registrados, mas updated_at é de um dia anterior (horário de Brasília),
+  // reseta automaticamente para 0 no banco e no objeto retornado
+  if (plain.comandos_dia > 0 && plain.updated_at) {
+    const lastUpdate = moment(plain.updated_at).tz('America/Sao_Paulo');
+    const today = moment().tz('America/Sao_Paulo');
+    if (!lastUpdate.isSame(today, 'day')) {
+      await Users.update(
+        { comandos_dia: 0 },
+        {
+          where: {
+            [Op.or]: [{ id_usuario: id }, { id_lid: id }],
+          },
+        },
+      );
+      plain.comandos_dia = 0;
+    }
+  }
+
+  return plain;
 };
 
 export const getAllUsers = async (): Promise<string[]> => {

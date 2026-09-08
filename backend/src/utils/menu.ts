@@ -143,6 +143,8 @@ export const menuUtilidades = () => {
 
 📌 *UTILIDADES*
 
+➤ *\`${prefixo}lembrete tempo texto\`* - _Agenda um alarme/lembrete (ex: 15m, 2h)_
+
 ➤ *\`${prefixo}clima cidade\`* - _Mostra como está o tempo na cidade_
 
 ➤ *\`${prefixo}megasena qtd [dezenas] [sorte N]\`* - _Gera jogos da Mega-Sena (6–15 dezenas)_
@@ -178,6 +180,8 @@ export const menuGrupo = (admin: boolean) => {
 ╭━━━ 🛠️ *GERAL* ━━━╮
 
 ➤ *\`${prefixo}status\`* - _Vê os recursos ligados/desligados._
+
+➤ *\`${prefixo}statusgrupo\`* - _Vê o plano mensal e dias restantes do grupo._
 
 ➤ *\`${prefixo}regras\`* - _Exibe a descrição do grupo com as regras._
 
@@ -318,6 +322,10 @@ export const menuDiversao = (grupo: boolean) => {
 
 ➤ *\`${prefixo}jogodavelha @adversário\`* - _Inicia um jogo da velha com um usuário do grupo._
 
+➤ *\`${prefixo}quiz\`* - _Jogo de perguntas e respostas com botões e prêmio de XP!_
+
+➤ *\`${prefixo}forca\`* - _O clássico jogo da forca em grupo (adivinhe a palavra)_
+
 ╭━━━ 🧩 *DIVERSÃO* ━━━╮
 
 ➤ *\`${prefixo}simi frase\`* - _Recebe uma resposta do SimSimi._
@@ -352,6 +360,10 @@ export const menuDiversao = (grupo: boolean) => {
 ╒═══════════════╕
 
 ╭━━━ 🧩 *DIVERSÃO* ━━━╮
+
+➤ *\`${prefixo}quiz\`* - _Jogo de perguntas e respostas com botões e prêmio de XP!_
+
+➤ *\`${prefixo}forca\`* - _O clássico jogo da forca (adivinhe a palavra)_
 
 ➤ *\`${prefixo}simi\`* frase - _Recebe uma resposta do SimSimi._
 
@@ -464,6 +476,8 @@ menuAdmin
 ╭━━━ 👨‍👩‍👧‍👦 *GRUPOS* ━━━╮
 
 • *\`${prefixo}grupos\`* - _Mostra os grupos atuais._
+
+• *\`${prefixo}planogrupo [dias]\`* - _Ativa, renova ou desativa plano mensal ilimitado no grupo._
 
 • *\`${prefixo}linkgrupo numero\`* - _Mostra o link do grupo selecionado._
 

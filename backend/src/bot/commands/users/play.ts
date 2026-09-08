@@ -7,6 +7,7 @@ import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg, createText } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import * as api from '../../api/downloads.js';
+import { downloadQueue } from '../../../utils/downloadQueue.js';
 
 const command: Command = {
   name: 'play',
@@ -42,36 +43,51 @@ const command: Command = {
         }
         videoUrl = `https://www.youtube.com/watch?v=${results.resultado?.videoId}`;
       }
-      await sock.sendReact(message.key, '🕒', id_chat);
+      await downloadQueue.enqueue(
+        'youtube_audio',
+        'YouTube Música (Play)',
+        async () => {
+          await sock.sendReact(message.key, '🕒', id_chat);
 
-      const { resultado: resultadoInfoVideo } = await api.getDataVideo(videoUrl);
+          const { resultado: resultadoInfoVideo } = await api.getDataVideo(videoUrl);
 
-      if (resultadoInfoVideo?.isLiveContent)
-        return await sock.replyText(id_chat, textMessage.downloads.play.msgs.erro_live, message);
-      else if (Number(resultadoInfoVideo?.durationFormatted) > 900)
-        return await sock.replyText(id_chat, textMessage.downloads.play.msgs.limite, message);
-      if (!resultadoInfoVideo) return;
+          if (resultadoInfoVideo?.isLiveContent)
+            return await sock.replyText(id_chat, textMessage.downloads.play.msgs.erro_live, message);
+          else if (Number(resultadoInfoVideo?.durationFormatted) > 900)
+            return await sock.replyText(id_chat, textMessage.downloads.play.msgs.limite, message);
+          if (!resultadoInfoVideo) return;
 
-      const mensagemEspera = createText(
-        textMessage.downloads.play.msgs.espera,
-        resultadoInfoVideo?.title || '',
-        resultadoInfoVideo.durationFormatted || '',
-      );
+          const mensagemEspera = createText(
+            textMessage.downloads.play.msgs.espera,
+            resultadoInfoVideo?.title || '',
+            resultadoInfoVideo.durationFormatted || '',
+          );
 
-      const imgUrl = resultadoInfoVideo.thumbnail!;
+          const imgUrl = resultadoInfoVideo.thumbnail!;
 
-      const bufferImg = await axios.get(imgUrl, { responseType: 'arraybuffer' });
+          const bufferImg = await axios.get(imgUrl, { responseType: 'arraybuffer' });
 
-      await sock.sendImage(id_chat, bufferImg.data, mensagemEspera);
+          await sock.sendImage(id_chat, bufferImg.data, mensagemEspera);
 
-      await sock.sendReact(message.key, '✅', id_chat);
-      await sock.replyFileBuffer(
-        typeMessages.AUDIO,
-        id_chat,
-        resultadoInfoVideo.buffer,
-        '',
-        message,
-        'audio/mpeg',
+          await sock.sendReact(message.key, '✅', id_chat);
+          await sock.replyFileBuffer(
+            typeMessages.AUDIO,
+            id_chat,
+            resultadoInfoVideo.buffer,
+            '',
+            message,
+            'audio/mpeg',
+          );
+        },
+        {
+          onWaiting: async (pos, name) => {
+            await sock.replyText(
+              id_chat,
+              `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 pedidos sendo baixados. Sua música está na fila na posição *#${pos}* e será baixada automaticamente assim que liberar um slot!`,
+              message,
+            );
+          },
+        },
       );
     } catch (err: any) {
       await sock.sendReact(message, '❌', id_chat);

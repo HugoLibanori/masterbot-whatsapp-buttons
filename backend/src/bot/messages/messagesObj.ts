@@ -50,6 +50,19 @@ export function commandInfo() {
     },
     //COMANDOS UTILIDADES
     utilidades: {
+      lembrete: {
+        descricao: '',
+        guia:
+          `⏰ *[Comando: ${prefixo}lembrete]*\n🧠 Sintaxe:\n` +
+          `- *\`${prefixo}lembrete\` 15m Beber água*\n` +
+          `- *\`${prefixo}lembrete\` 2h Reunião com a equipe*\n` +
+          `- *\`${prefixo}lembrete\` 30s Tirar algo do forno*\n` +
+          `- *\`${prefixo}lembrete\` 1d Pagar boleto*\n\n` +
+          `📡 Descrição: Agenda um lembrete persistente. Na hora marcada, o bot envia uma notificação marcando você!\n` +
+          `⏱️ Unidades de tempo: s (segundos), m (minutos), h (horas), d (dias).\n` +
+          `> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {},
+      },
       brasileirao: {
         descricao: '',
         guia:
@@ -265,26 +278,23 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
         guia: `Ex: *${prefixo}vantagens* - Mostra as vantagens do bot.\n`,
         msgs: {
           resposta: `
-💎 *VANTAGENS PREMIUM & VIP* 💎
+💎 *PLANOS E VANTAGENS DO BOT* 💎
 
-👤 *Usuário Comum*
-- Acesso limitado aos comandos básicos.
-- Sujeito a limite diário de uso.
+📱 *Plano Individual (Privado / PV)*
+- Acesso liberado a todos os comandos direto no PV do bot.
+- Downloads ilimitados (YouTube, TikTok, Instagram, Facebook).
+- Músicas no comando *${prefixo}play*.
+- Figurinhas estáticas e animadas, inteligência artificial e utilitários.
+💵 *Valor: R$ 10,00 / mês*
 
-💠 *Usuário Premium*
-- Acesso liberado a quase todos os comandos.
-- Limite diário muito maior.
-- Prioridade de resposta do bot.
-- Suporte básico via PV.
+👥 *Plano para Grupo Completo*
+- O bot fica 100% liberado no grupo para *TODOS* os membros usarem sem limite!
+- Comandos de jogos em grupo (*${prefixo}quiz*, *${prefixo}forca*, etc.).
+- Lembretes automáticos marcando todos (*${prefixo}lembrete*).
+- Gestão do grupo, anti-link e moderação.
+💵 *Valor: R$ 30,00 / mês por grupo*
 
-👑 *Usuário VIP*
-- Acesso total a *todos os recursos* do bot.
-- Sem limites de comandos.
-- Respostas mais rápidas.
-- Recursos beta e exclusivos.
-- Suporte personalizado direto com o criador.
-
-💬 Use: *${prefixo}pix* para apoiar e se tornar Premium/VIP. Valores para PREMIUM de R$5,00 até R$10,00, para VIP acima de R$10,00
+💬 Use *${prefixo}pix* para ver os dados de pagamento ou *${prefixo}dono* para falar com o criador!
     `,
         },
       },
@@ -477,6 +487,28 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
     },
     //COMANDOS DIVERSÃO
     diversao: {
+      quiz: {
+        descricao: '',
+        guia:
+          `🧠 *[Comando: ${prefixo}quiz]*\n🧠 Sintaxe:\n` +
+          `- *\`${prefixo}quiz\`* - Inicia uma nova rodada de perguntas com botões.\n` +
+          `- *\`${prefixo}quiz\` 1-4* - Responde com o número da alternativa escolhida.\n\n` +
+          `📡 Descrição: Jogo interativo de perguntas e respostas com 45 segundos de tempo, botões de clique rápido e premiação em XP para quem acertar primeiro!\n` +
+          `> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {},
+      },
+      forca: {
+        descricao: '',
+        guia:
+          `🔤 *[Comando: ${prefixo}forca]*\n🧠 Sintaxe:\n` +
+          `- *\`${prefixo}forca\`* - Inicia uma nova partida ou exibe o status atual.\n` +
+          `- *\`${prefixo}forca\` <letra>* - Palpita uma letra (ex: *${prefixo}forca a*).\n` +
+          `- *\`${prefixo}forca\` <palavra>* - Chuta a palavra inteira.\n` +
+          `- *\`${prefixo}forca\` desistir* - Encerra a partida e revela a palavra.\n\n` +
+          `📡 Descrição: O clássico jogo da forca em grupo com 6 vidas, boneco animado em texto, dicas e +50 XP para quem vencer!\n` +
+          `> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {},
+      },
       simi: {
         descricao: '',
         guia: `🤖 *[Comando: simi]*\n🧠 Sintaxe: *\`${prefixo}simi texto\`*\n📡 Descrição: Sua pergunta será respondida pela SimSimi.\n> ⌬ Estabelecendo conexão com o servidor...\n`,
@@ -657,6 +689,14 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
     },
     //COMANDOS GRUPO
     grupo: {
+      statusgrupo: {
+        descricao: '',
+        guia:
+          `📊 *[Comando: ${prefixo}statusgrupo]*\n🧠 Sintaxe:\n- *\`${prefixo}statusgrupo\`*\n\n` +
+          `📡 Descrição: Exibe o status da assinatura mensal do grupo (se está ativo, data de vencimento e dias restantes) e as configurações ativas.\n` +
+          `> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {},
+      },
       status: {
         descricao: '',
         guia: `🛠️ *[Comando: ${prefixo}status]*\n🧠 Sintaxe:\n- *\`${prefixo}status\`*\n📥 Descrição: Exibe as configurações atuais do grupo.\n> ⌬ Coletando informações do grupo...`,
@@ -1563,6 +1603,18 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
             '[❗] Não foi possível obter o link desse grupo, o bot não é administrador deste grupo.',
           nao_encontrado: `[❗] Não foi possível obter o link desse grupo, o grupo não foi encontrado ou o número é inválido. Cheque o comando correto em *${prefixo}grupos*`,
         },
+      },
+      planogrupo: {
+        descricao: '',
+        guia:
+          `👑 *[Comando: ${prefixo}planogrupo]*\n🧠 Sintaxe:\n` +
+          `- *\`${prefixo}planogrupo\` 30* - No grupo, ativa ou renova o plano por 30 dias.\n` +
+          `- *\`${prefixo}planogrupo\` 0* - No grupo, desativa o plano do grupo.\n` +
+          `- *\`${prefixo}planogrupo\` 1 30* - No privado, ativa 30 dias para o grupo nº 1 da lista de *${prefixo}grupos*.\n` +
+          `- *\`${prefixo}planogrupo\` 1 0* - No privado, desativa o plano do grupo nº 1.\n\n` +
+          `📡 Descrição: Libera comandos ILIMITADOS para TODOS os membros dentro daquele grupo, sem limite diário individual.\n` +
+          `> ⌬ Estabelecendo conexão com o servidor...`,
+        msgs: {},
       },
       tipos: {
         descricao: '',

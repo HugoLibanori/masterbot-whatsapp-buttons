@@ -13,6 +13,7 @@ import BotOwner from './models/BotOwner.js';
 import SessionLog from './models/SessionLog.js';
 import Customer from './models/Customer.js';
 import XpConfig from './models/XpConfig.js';
+import Lembrete from './models/Lembrete.js';
 
 // ✅ cache de conexões por cliente
 const connections: Record<string, Sequelize> = {};
@@ -30,10 +31,11 @@ const models = [
   SessionLog,
   Customer,
   XpConfig,
+  Lembrete,
 ];
 
 // Modelos carregados por conexão de sessão (não inclui BotLicense para manter no MASTER)
-const sessionModels = [Bot, Users, Grupo, Contador, Conversation, BaileysSession, XpEvent, BotOwner];
+const sessionModels = [Bot, Users, Grupo, Contador, Conversation, BaileysSession, XpEvent, BotOwner, Lembrete];
 
 // ✅ CONEXÃO PADRÃO (BD_BOT)
 export function createDatabaseConnection(customDatabase?: string) {

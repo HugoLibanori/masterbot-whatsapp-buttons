@@ -5,6 +5,7 @@ import { commandErrorMsg, createText, downloadBufferLink } from '../../../utils/
 import { typeMessages } from '../../messages/contentMessage.js';
 import axios from 'axios';
 import { snapsave } from 'snapsave-media-downloader';
+import { downloadQueue } from '../../../utils/downloadQueue.js';
 
 interface InstagramMedia {
   tipo: 'image' | 'video' | string;
@@ -83,33 +84,48 @@ const command: Command = {
         return await sock.replyText(id_chat, textMessage.downloads.ig.msgs.isStoties, message);
       }
 
-      await sock.sendReact(message.key, '🕒', id_chat);
-      await sock.replyText(id_chat, textMessage.downloads.ig.msgs.espera, message);
+      await downloadQueue.enqueue(
+        'instagram',
+        'Instagram',
+        async () => {
+          await sock.sendReact(message.key, '🕒', id_chat);
+          await sock.replyText(id_chat, textMessage.downloads.ig.msgs.espera, message);
 
-      const resultadoIG = await fetchInstagramLinks(linkMidia, dataBot);
-      const item = resultadoIG;
+          const resultadoIG = await fetchInstagramLinks(linkMidia, dataBot);
+          const item = resultadoIG;
 
-      if (!item || !item[midiaIndex]) {
-        return await sock.replyText(id_chat, 'Mídia não encontrada ou índice inválido.', message);
-      }
+          if (!item || !item[midiaIndex]) {
+            return await sock.replyText(id_chat, 'Mídia não encontrada ou índice inválido.', message);
+          }
 
-      const baileysSock = await sock.getInstance();
+          const baileysSock = await sock.getInstance();
 
-      if (item[midiaIndex].tipo !== 'video') {
-        await baileysSock.sendMessage(
-          id_chat,
-          { image: { url: item[midiaIndex].url }, caption: '' },
-          { quoted: message },
-        );
-      } else {
-        await baileysSock.sendMessage(
-          id_chat,
-          { video: { url: item[midiaIndex].url }, caption: '' },
-          { quoted: message },
-        );
-      }
+          if (item[midiaIndex].tipo !== 'video') {
+            await baileysSock.sendMessage(
+              id_chat,
+              { image: { url: item[midiaIndex].url }, caption: '' },
+              { quoted: message },
+            );
+          } else {
+            await baileysSock.sendMessage(
+              id_chat,
+              { video: { url: item[midiaIndex].url }, caption: '' },
+              { quoted: message },
+            );
+          }
 
-      await sock.sendReact(message.key, '✅', id_chat);
+          await sock.sendReact(message.key, '✅', id_chat);
+        },
+        {
+          onWaiting: async (pos, name) => {
+            await sock.replyText(
+              id_chat,
+              `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 downloads em andamento. Seu pedido está na fila na posição *#${pos}* e começará automaticamente assim que liberar um slot!`,
+              message,
+            );
+          },
+        },
+      );
     } catch (err: any) {
       console.error('Erro IG:', err);
       await sock.replyText(

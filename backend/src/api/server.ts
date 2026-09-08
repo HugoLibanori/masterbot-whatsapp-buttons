@@ -822,12 +822,42 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   }
 }
 
+async function autoStartActiveSessions() {
+  try {
+    const activeLicenses = await BotLicense.findAll({
+      where: { status: 'active' },
+    });
+    for (const lic of activeLicenses) {
+      const sessionName = lic.session_name;
+      const isOwner = sessionName === OWNER_SESSION_NAME;
+      if (!isOwner && lic.expires_at && new Date(lic.expires_at) < new Date()) {
+        continue;
+      }
+      console.log(`[API] Auto-iniciando sessão ativa: ${sessionName}`);
+      try {
+        const sequelize = await prepareSessionDatabase(sessionName);
+        setSessionStatus(sessionName, 'starting');
+        connectWhatsapp(sessionName, sequelize).catch((e) => {
+          console.error(`[API] Erro ao auto-iniciar sessão ${sessionName}:`, e);
+        });
+      } catch (err) {
+        console.error(`[API] Falha ao preparar banco para auto-iniciar sessão ${sessionName}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('[API] Erro ao carregar sessões ativas:', err);
+  }
+}
+
 export async function startApiServer(port = Number(process.env.PORT) || 4000, host = '127.0.0.1') {
   await initDB();
   await ensureXpConfigLoaded();
   const server = http.createServer(handleRequest);
-  server.listen(port, host, () => {
+  server.listen(port, host, async () => {
     console.log(`[API] Servidor iniciado em http://localhost:${port}`);
+    autoStartActiveSessions();
+    const { startLembreteWorker } = await import('../services/LembreteService.js');
+    startLembreteWorker();
   });
 }
 

@@ -13,6 +13,8 @@ export default class Users extends Model<InferAttributes<Users>, InferCreationAt
   declare expira_em: Date | null;
   declare plano_ativo: boolean;
   declare last_auto_reply_at: Date | null;
+  declare created_at?: Date;
+  declare updated_at?: Date;
 
   static initial(sequelize: Sequelize) {
     Users.init(

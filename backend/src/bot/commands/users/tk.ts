@@ -5,6 +5,7 @@ import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg, createText, downloadBufferLink } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import axios from 'axios';
+import { downloadQueue } from '../../../utils/downloadQueue.js';
 
 interface TiktokMedia {
   tipo: 'image' | 'video' | string;
@@ -87,26 +88,41 @@ const command: Command = {
         return await sock.replyText(id_chat, textMessage.downloads.tk.msgs.erro_link, message);
       }
 
-      await sock.replyText(id_chat, textMessage.downloads.tk.msgs.espera, message);
+      await downloadQueue.enqueue(
+        'tiktok',
+        'TikTok',
+        async () => {
+          await sock.replyText(id_chat, textMessage.downloads.tk.msgs.espera, message);
 
-      const item = await fetchTiktokLinks(linkMidia, dataBot);
+          const item = await fetchTiktokLinks(linkMidia, dataBot);
 
-      if (!item) {
-        return await sock.replyText(id_chat, 'Mídia não encontrada ou inválida.', message);
-      }
+          if (!item) {
+            return await sock.replyText(id_chat, 'Mídia não encontrada ou inválida.', message);
+          }
 
-      if (!item.tipo.includes('video_post')) {
-        await sock.replyFileBuffer(typeMessages.IMAGE, id_chat, item.resultado, '', message);
-      } else if (item.tipo.includes('video_post')) {
-        await sock.replyFileBuffer(
-          typeMessages.VIDEO,
-          id_chat,
-          item.resultado,
-          '',
-          message,
-          'video/mp4',
-        );
-      }
+          if (!item.tipo.includes('video_post')) {
+            await sock.replyFileBuffer(typeMessages.IMAGE, id_chat, item.resultado, '', message);
+          } else if (item.tipo.includes('video_post')) {
+            await sock.replyFileBuffer(
+              typeMessages.VIDEO,
+              id_chat,
+              item.resultado,
+              '',
+              message,
+              'video/mp4',
+            );
+          }
+        },
+        {
+          onWaiting: async (pos, name) => {
+            await sock.replyText(
+              id_chat,
+              `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 downloads em andamento. Seu pedido está na fila na posição *#${pos}* e começará automaticamente assim que liberar um slot!`,
+              message,
+            );
+          },
+        },
+      );
     } catch (err: any) {
       console.error('Erro Tk:', err);
       await sock.replyText(

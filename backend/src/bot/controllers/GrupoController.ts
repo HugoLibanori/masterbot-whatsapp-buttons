@@ -99,6 +99,8 @@ export const registerGroupsInital = async (groupInfo: GroupMetadata[]): Promise<
             lista_negra: [],
             descricao: grupo.desc ?? '',
             openai: { status: false },
+            plano_ativo: false,
+            expira_em: null,
           };
           await Grupos.create(dataGroup);
         } else {
@@ -265,17 +267,22 @@ export const verifiedBlackList = async (
   }
 };
 
+export const extractParticipantJid = (p: any): string => {
+  if (!p) return '';
+  if (typeof p === 'string') return p;
+  if (typeof p === 'object') {
+    return p.phoneNumber || p.id || '';
+  }
+  return String(p);
+};
+
 export const verificarListaNegraUsuario = async (
   sock: ISocket,
   groupData: {
     id: string;
     author: string;
     authorPn?: string;
-    participants: {
-      isAdmin?: boolean;
-      isSuperAdmin?: boolean;
-      admin?: 'admin' | 'superadmin' | null;
-    }[];
+    participants: any[];
     action: 'add' | 'remove' | 'promote' | 'demote' | 'modify';
   },
   botInfo: Partial<Bot>,
@@ -287,19 +294,29 @@ export const verificarListaNegraUsuario = async (
     const botAdmin = grupoAdmins.includes(botInfo.number_bot!);
     if (botAdmin) {
       let lista_negra = await obterListaNegra(groupData.id);
-      if (lista_negra.includes(groupData.participants[0].toString())) {
-        await sock.removerParticipant(groupData.id, groupData.participants[0].toString());
-        await sock.sendTextWithMentions(
-          groupData.id,
-          createText(
-            comandos_info.outros.resposta_ban,
-            groupData.participants[0].toString().replace('@s.whatsapp.net', ''),
-            comandos_info.grupo.listanegra.msgs.motivo,
-            botInfo.number_bot!,
-          ),
-          [groupData.participants[0].toString()],
-        );
-        return false;
+      const rawParticipants =
+        groupData.participants && groupData.participants.length > 0
+          ? groupData.participants
+          : [groupData.authorPn ? groupData.authorPn : groupData.author];
+
+      for (const p of rawParticipants) {
+        const participante = extractParticipantJid(p);
+        if (!participante) continue;
+        const partNumber = participante.replace(/@.+/, '');
+        if (lista_negra.includes(participante) || lista_negra.includes(partNumber)) {
+          await sock.removerParticipant(groupData.id, participante);
+          await sock.sendTextWithMentions(
+            groupData.id,
+            createText(
+              comandos_info.outros.resposta_ban,
+              partNumber,
+              comandos_info.grupo.listanegra.msgs.motivo,
+              botInfo.number_bot!,
+            ),
+            [participante],
+          );
+          return false;
+        }
       }
     }
     return true;
@@ -991,11 +1008,7 @@ export const filterAntiFake = async (
     id: string;
     author: string;
     authorPn?: string;
-    participants: {
-      isAdmin?: boolean;
-      isSuperAdmin?: boolean;
-      admin?: 'admin' | 'superadmin' | null;
-    }[];
+    participants: any[];
     action: 'add' | 'remove' | 'promote' | 'demote' | 'modify';
   },
   botInfo: Partial<Bot>,
@@ -1005,27 +1018,44 @@ export const filterAntiFake = async (
   try {
     if (grupoInfo.antifake.status) {
       const comandos_info = commandInfo();
-      let participante = evento.authorPn ? evento.authorPn : evento.author;
+      const rawParticipants =
+        evento.participants && evento.participants.length > 0
+          ? evento.participants
+          : [evento.authorPn ? evento.authorPn : evento.author];
+
       let grupoAdmins = grupoInfo.admins;
       let botAdmin = grupoAdmins.includes(botInfo.number_bot!);
       if (!botAdmin) {
         await changeAntiFake(evento.id, false);
+        return true;
       } else {
-        for (let ddi of grupoInfo.antifake.ddi_liberados) {
-          if (participante.startsWith(ddi)) return true;
+        for (const p of rawParticipants) {
+          const participante = extractParticipantJid(p);
+          if (!participante) continue;
+          const numero = participante.replace(/@.+/, '').replace(/\D/g, '');
+
+          let liberado = false;
+          for (let ddi of grupoInfo.antifake.ddi_liberados) {
+            if (numero.startsWith(ddi) || participante.startsWith(ddi)) {
+              liberado = true;
+              break;
+            }
+          }
+          if (!liberado) {
+            await sock.sendTextWithMentions(
+              evento.id,
+              createText(
+                comandos_info.outros.resposta_ban,
+                numero,
+                comandos_info.grupo.afake.msgs.motivo,
+                botInfo.number_bot!.replace('@s.whatsapp.net', ''),
+              ),
+              [participante, botInfo.number_bot!],
+            );
+            await sock.removerParticipant(evento.id, participante);
+            return false;
+          }
         }
-        await sock.sendTextWithMentions(
-          evento.id,
-          createText(
-            comandos_info.outros.resposta_ban,
-            participante.replace('@s.whatsapp.net', ''),
-            comandos_info.grupo.afake.msgs.motivo,
-            botInfo.number_bot!.replace('@s.whatsapp.net', ''),
-          ),
-          [participante, botInfo.number_bot!],
-        );
-        await sock.removerParticipant(evento.id, participante);
-        return false;
       }
     }
     return true;
@@ -1042,11 +1072,7 @@ export const welcomeMessage = async (
     id: string;
     author: string;
     authorPn?: string;
-    participants: {
-      isAdmin?: boolean;
-      isSuperAdmin?: boolean;
-      admin?: 'admin' | 'superadmin' | null;
-    }[];
+    participants: any[];
     action: 'add' | 'remove' | 'promote' | 'demote' | 'modify';
   },
   botInfo: Partial<Bot>,
@@ -1057,33 +1083,47 @@ export const welcomeMessage = async (
     const comandos_info = commandInfo();
     if (grupoInfo.bemvindo.status) {
       let msg_customizada = grupoInfo.bemvindo.msg != '' ? grupoInfo.bemvindo.msg + '\n\n' : '';
-      let telefone = evento.authorPn ? evento.authorPn.replace('@s.whatsapp.net', '') : '';
-      let mensagem_bemvindo = createText(
-        comandos_info.grupo.bv.msgs.mensagem,
-        telefone,
-        grupoInfo.nome,
-        msg_customizada,
-      );
-      let fotoUrl: string | undefined = undefined;
-      try {
-        fotoUrl = await sock.getImagePerfil(evento.authorPn ? evento.authorPn : evento.author);
-      } catch (err: any) {
-        console.log(err, 'Erro ao obter foto de perfil do usuário');
-      }
-      const bufferImg = await gerarImagemBemVindo(telefone, grupoInfo.nome, fotoUrl);
 
-      const buttons: types.MyButtons = {
-        caption: mensagem_bemvindo,
-        mentions: [evento.authorPn ? evento.authorPn : evento.author],
-        buttons: [
-          {
-            buttonId: `bvmenu_${evento.authorPn ? evento.authorPn : evento.author}`,
-            buttonText: { displayText: `${botInfo.prefix}menu` },
-            type: 1,
-          },
-        ],
-      };
-      await sock.replyButtonsWithImage(evento.id, buttons, bufferImg);
+      // Participantes adicionados/que entraram no grupo
+      const targetParticipants =
+        evento.participants && evento.participants.length > 0
+          ? evento.participants
+          : [evento.authorPn ? evento.authorPn : evento.author];
+
+      for (const p of targetParticipants) {
+        const participantJid = extractParticipantJid(p);
+        if (!participantJid) continue;
+
+        let telefone = participantJid.replace(/@.+/, '').replace(/\D/g, '');
+        let mensagem_bemvindo = createText(
+          comandos_info.grupo.bv.msgs.mensagem,
+          telefone,
+          grupoInfo.nome,
+          msg_customizada,
+        );
+
+        let fotoUrl: string | undefined = undefined;
+        try {
+          fotoUrl = await sock.getImagePerfil(participantJid);
+        } catch (err: any) {
+          console.log(`[Bem-vindo] Foto de perfil não encontrada ou privada para ${participantJid}`);
+        }
+
+        const bufferImg = await gerarImagemBemVindo(telefone, grupoInfo.nome, fotoUrl);
+
+        const buttons: types.MyButtons = {
+          caption: mensagem_bemvindo,
+          mentions: [participantJid],
+          buttons: [
+            {
+              buttonId: `bvmenu_${participantJid}`,
+              buttonText: { displayText: `${botInfo.prefix}menu` },
+              type: 1,
+            },
+          ],
+        };
+        await sock.replyButtonsWithImage(evento.id, buttons, bufferImg);
+      }
     }
   } catch (err: any) {
     err.message = `bemVindo - ${err.message}`;
@@ -1305,3 +1345,106 @@ export const changeOpenAI = async (id_grupo: string, status: boolean) => {
     console.error(`Erro ao escrever o arquivo ou obter NSFW: ${err.message}`);
   }
 };
+
+export const setGroupPlan = async (id_grupo: string, dias: number) => {
+  if (isNaN(dias) || dias < 0) {
+    throw new Error('O valor de dias é inválido.');
+  }
+
+  let expiraEm: Date | null = null;
+  const planoAtivo = dias > 0;
+
+  if (dias > 0) {
+    expiraEm = new Date();
+    expiraEm.setDate(expiraEm.getDate() + dias);
+  }
+
+  await Grupos.update(
+    {
+      plano_ativo: planoAtivo,
+      expira_em: expiraEm,
+    },
+    { where: { id_grupo } },
+  );
+
+  return {
+    plano_ativo: planoAtivo,
+    ativo: planoAtivo,
+    expira_em: expiraEm,
+    dias,
+    diasRestantes: dias,
+  };
+};
+
+export const checkGroupPlanExpiration = async (id_grupo: string): Promise<boolean> => {
+  if (!id_grupo) return false;
+  const grupo = await Grupos.findOne({ where: { id_grupo } });
+  if (!grupo) return false;
+
+  if (grupo.plano_ativo && grupo.expira_em) {
+    const agora = new Date();
+    const dataExp = new Date(grupo.expira_em);
+
+    if (dataExp <= agora) {
+      await Grupos.update(
+        { plano_ativo: false, expira_em: null },
+        { where: { id_grupo } },
+      );
+      return false;
+    }
+    return true;
+  }
+
+  return Boolean(grupo.plano_ativo);
+};
+
+export const getGroupPlanStatus = async (id_grupo: string) => {
+  const grupo = await Grupos.findOne({ where: { id_grupo } });
+  if (!grupo) return { ativo: false, plano_ativo: false, expira_em: null, diasRestantes: 0, grupo: null };
+
+  await checkGroupPlanExpiration(id_grupo);
+  const updatedGroup = await Grupos.findOne({ where: { id_grupo } });
+
+  if (!updatedGroup || !updatedGroup.plano_ativo || !updatedGroup.expira_em) {
+    return {
+      ativo: Boolean(updatedGroup?.plano_ativo),
+      plano_ativo: Boolean(updatedGroup?.plano_ativo),
+      expira_em: null,
+      diasRestantes: 0,
+      grupo: updatedGroup,
+    };
+  }
+
+  const agora = new Date().getTime();
+  const expTime = new Date(updatedGroup.expira_em).getTime();
+  const diffMs = expTime - agora;
+  const diasRestantes = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+  return {
+    ativo: true,
+    plano_ativo: true,
+    expira_em: updatedGroup.expira_em,
+    diasRestantes,
+    grupo: updatedGroup,
+  };
+};
+
+export const checkAllGroupPlanExpirations = async () => {
+  const agora = new Date();
+  const expirados = await Grupos.findAll({
+    where: {
+      plano_ativo: true,
+      expira_em: { [Op.lte]: agora },
+    },
+  });
+
+  for (const gp of expirados) {
+    await Grupos.update(
+      { plano_ativo: false, expira_em: null },
+      { where: { id_grupo: gp.id_grupo } },
+    );
+  }
+
+  return expirados.length;
+};
+

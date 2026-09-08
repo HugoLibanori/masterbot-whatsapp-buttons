@@ -8,6 +8,11 @@ import { ISocket } from '../../types/MyTypes/index.js';
 import { createText, textColor, checkCommandExists } from '../../utils/utils.js';
 import { BotData } from '../../configs/configBot/BotData.js';
 import * as userController from './UserController.js';
+import { avisoLimiteDiarioCache } from '../../utils/caches.js';
+
+export const getNextMidnightTimestamp = (): number => {
+  return moment().tz('America/Sao_Paulo').add(1, 'day').startOf('day').unix();
+};
 
 export const registerBotData = async (sock?: ISocket) => {
   try {
@@ -265,10 +270,18 @@ export const checkExpirationLimit = async (botInfo: Partial<Bot>) => {
 
   if (timestamp_atual >= bot.limite_diario.expiracao) {
     await userController.resetCommandsDay();
+    try {
+      avisoLimiteDiarioCache.flushAll();
+    } catch {}
 
-    // Atualiza APENAS a expiração no banco, mantendo os TIPOS intactos
-    const novoLimiteDiario = { ...bot.limite_diario, expiracao: timestamp_atual + 86400 };
+    // Próxima expiração: 00:00:00 do dia seguinte no horário de Brasília (virada da meia-noite)
+    const proximaExpiracao = getNextMidnightTimestamp();
+    const novoLimiteDiario = { ...bot.limite_diario, expiracao: proximaExpiracao };
+    bot.limite_diario = novoLimiteDiario;
     await updateBotData({ limite_diario: novoLimiteDiario });
+    console.log(
+      `[LimiteDiario] ✓ Virada de meia-noite processada! Contadores diários resetados para todos os usuários. Próxima expiração: ${moment.unix(proximaExpiracao).tz('America/Sao_Paulo').format('DD/MM/YYYY HH:mm:ss')}`,
+    );
   }
 };
 
@@ -430,9 +443,8 @@ export const removeUserType = async (botInfo: Partial<Bot>, tipo: string) => {
 export const changeDailyLimit = async (status: boolean, botInfo: Partial<Bot>) => {
   let bot = await getBotData();
   if (!bot || !bot.limite_diario) return;
-  const timestamp_atual = Math.round(new Date().getTime() / 1000);
 
-  bot.limite_diario.expiracao = status ? timestamp_atual + 86400 : 0;
+  bot.limite_diario.expiracao = status ? getNextMidnightTimestamp() : 0;
   bot.limite_diario.status = status;
 
   await updateBotData({ limite_diario: bot.limite_diario });
@@ -575,3 +587,20 @@ export const removeTester = async (jid: string): Promise<boolean> => {
   await updateBotData({ testers });
   return true;
 };
+
+// Inicia verificação periódica de virada da meia-noite (a cada 30 segundos)
+export const iniciarVerificacaoLimiteDiario = (): void => {
+  setInterval(async () => {
+    try {
+      const bot = BotData.get();
+      if (bot && bot.limite_diario?.status) {
+        await checkExpirationLimit(bot);
+      }
+    } catch (err) {
+      console.error('[LimiteDiario] Erro na verificação periódica de virada da meia-noite:', err);
+    }
+  }, 30 * 1000);
+};
+
+iniciarVerificacaoLimiteDiario();
+

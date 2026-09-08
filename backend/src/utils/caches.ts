@@ -41,6 +41,9 @@ class SessionCache<T> {
       .filter((k) => k.startsWith(`${currentSession}:`))
       .map((k) => k.replace(`${currentSession}:`, ''));
   }
+  flushAll() {
+    return this.raw.flushAll();
+  }
 }
 
 // Export session caches

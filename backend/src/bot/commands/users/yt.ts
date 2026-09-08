@@ -7,6 +7,7 @@ import { CommandReturn } from '../../../interfaces/index.js';
 import { commandErrorMsg, createText } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import * as api from '../../api/downloads.js';
+import { downloadQueue } from '../../../utils/downloadQueue.js';
 
 const command: Command = {
   name: 'yt',
@@ -68,17 +69,32 @@ const command: Command = {
         videoUrl = `https://www.youtube.com/watch?v=${results.resultado?.videoId}`;
       }
 
-      const { resultado: resultadoYTMP4, erro } = await api.obterYTMP4(videoUrl);
-      if (erro)
-        return await sock.replyText(id_chat, textMessage.downloads.yt.msgs.erro_restrict, message);
-      if (!resultadoYTMP4) return console.log('Erro ao obter o vídeo do Youtube');
-      await sock.replyFileBuffer(
-        typeMessages.VIDEO,
-        id_chat,
-        resultadoYTMP4.buffer,
-        '',
-        message,
-        'video/mp4',
+      await downloadQueue.enqueue(
+        'youtube_video',
+        'YouTube Vídeo',
+        async () => {
+          const { resultado: resultadoYTMP4, erro } = await api.obterYTMP4(videoUrl);
+          if (erro)
+            return await sock.replyText(id_chat, textMessage.downloads.yt.msgs.erro_restrict, message);
+          if (!resultadoYTMP4) return console.log('Erro ao obter o vídeo do Youtube');
+          await sock.replyFileBuffer(
+            typeMessages.VIDEO,
+            id_chat,
+            resultadoYTMP4.buffer,
+            '',
+            message,
+            'video/mp4',
+          );
+        },
+        {
+          onWaiting: async (pos, name) => {
+            await sock.replyText(
+              id_chat,
+              `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 downloads em andamento. Seu pedido está na fila na posição *#${pos}* e será baixado automaticamente assim que liberar um slot!`,
+              message,
+            );
+          },
+        },
       );
     } catch (err: any) {
       if (!err.erro) throw err;

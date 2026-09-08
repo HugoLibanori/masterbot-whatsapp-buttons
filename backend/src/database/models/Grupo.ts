@@ -46,6 +46,8 @@ export default class Grupos extends Model<
   declare openai: {
     status: boolean;
   };
+  declare plano_ativo: boolean;
+  declare expira_em: Date | null;
   static initial(sequelize: Sequelize) {
     Grupos.init(
       {
@@ -134,6 +136,16 @@ export default class Grupos extends Model<
           type: DataTypes.JSON,
           allowNull: false,
           defaultValue: { status: false },
+        },
+        plano_ativo: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
+        expira_em: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
         },
       },
       {

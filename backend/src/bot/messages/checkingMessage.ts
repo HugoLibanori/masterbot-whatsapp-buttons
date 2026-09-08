@@ -16,6 +16,7 @@ import { BotData } from '../../configs/configBot/BotData.js';
 import * as userController from '../controllers/UserController.js';
 import { verificarCooldown, verificarAutoReplyCooldown } from '../../utils/cooldownUtils.js';
 import { XPEventType } from '../../configs/xp/xpRules.js';
+import { sendWelcomeSalesMessage } from '../../utils/welcomeSalesMessage.js';
 
 export const checkingMessage = async (
   sock: ISocket,
@@ -115,45 +116,50 @@ export const checkingMessage = async (
     return await autoSticker(sock, message, messageContent, dataBot);
   }
 
-  // Auto-responder no PV: se não for comando e PV estiver liberado, enviar menu
+  // Auto-responder no PV: se não for comando e PV estiver liberado, enviar mensagem de boas-vindas comercial
   if (!isGroup && dataBot.commands_pv) {
     // se a mensagem começa com o prefixo e não é um comando existente, ignore (não auto-responder)
     if (!command.startsWith(dataBot.prefix ?? '')) {
-      const menuCmd = Array.from(commands.values()).find((c) => c.name === 'menu');
-      if (menuCmd) {
-        // checa cooldown específico para auto-reply (configurável via dataBot.autoReplyCooldownSeconds em segundos)
-        if (sender) {
-          const autoReplySeconds = Number(dataBot.auto_reply_cooldown_seconds ?? 86400);
+      // checa cooldown específico para auto-reply (configurável via dataBot.autoReplyCooldownSeconds em segundos)
+      if (sender) {
+        const autoReplySeconds = Number(dataBot.auto_reply_cooldown_seconds ?? 86400);
 
-          // consulta último auto-reply persistido no BD para não perder o estado entre reinícios
-          const last = await userController.getLastAutoReplyAt(sender);
-          if (last) {
-            const elapsed = Date.now() - new Date(last).getTime();
-            if (elapsed < autoReplySeconds * 1000) return;
-          }
-
-          // checa cache em memória para evitar I/O de DB para cada mensagem
-          const permitidoAutoReply = verificarAutoReplyCooldown(sender, autoReplySeconds);
-          if (!permitidoAutoReply) return;
+        // consulta último auto-reply persistido no BD para não perder o estado entre reinícios
+        const last = await userController.getLastAutoReplyAt(sender);
+        if (last) {
+          const elapsed = Date.now() - new Date(last).getTime();
+          if (elapsed < autoReplySeconds * 1000) return;
         }
 
-        // Segurança: se id_chat estiver vazio / inválido, não executar o comando —
-        // evitar chamar sendMessage com JID inválido que causa jidDecode undefined
-        if (!id_chat) {
-          console.warn('[auto-reply] pulando menu auto-reply porque id_chat está vazio', {
-            userId,
-            messageKey: message?.key,
-          });
-        } else {
-          await runCommand(menuCmd, sock, message, messageContent, [], dataBot);
-          if (userId && dataBot.xp?.status) await addXpForInteraction(userId, id_chat, sock);
+        // checa cache em memória para evitar I/O de DB para cada mensagem
+        const permitidoAutoReply = verificarAutoReplyCooldown(sender, autoReplySeconds);
+        if (!permitidoAutoReply) return;
+      }
 
-          // persiste o instante do auto-reply no BD para sobreviver a reinícios
-          if (userId) {
-            try {
-              await userController.setLastAutoReplyAt(userId, new Date());
-            } catch {}
-          }
+      // Segurança: se id_chat estiver vazio / inválido, não executar —
+      // evitar chamar sendMessage com JID inválido que causa jidDecode undefined
+      if (!id_chat) {
+        console.warn('[auto-reply] pulando boas-vindas auto-reply porque id_chat está vazio', {
+          userId,
+          messageKey: message?.key,
+        });
+      } else {
+        await sendWelcomeSalesMessage(
+          sock,
+          id_chat,
+          pushName,
+          dataBot.prefix ?? '!',
+          dataBot.number_bot,
+          dataBot.name || 'MasterBot',
+          message,
+        );
+        if (userId && dataBot.xp?.status) await addXpForInteraction(userId, id_chat, sock);
+
+        // persiste o instante do auto-reply no BD para sobreviver a reinícios
+        if (userId) {
+          try {
+            await userController.setLastAutoReplyAt(userId, new Date());
+          } catch {}
         }
       }
     }
