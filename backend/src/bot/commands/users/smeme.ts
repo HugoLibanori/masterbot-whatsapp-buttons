@@ -1,4 +1,3 @@
-import { downloadMediaMessage } from '@innovatorssoft/baileys';
 import * as types from '../../../types/BaileysTypes/index.js';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import ffmpeg from 'fluent-ffmpeg';
@@ -10,7 +9,7 @@ import fs from 'fs';
 import { MessageContent, Command, Bot, Resposta } from '../../../interfaces/index.js';
 import { ISocket } from '../../../types/MyTypes/index.js';
 import { typeMessages } from '../../messages/contentMessage.js';
-import { commandErrorMsg, getPathTemp } from '../../../utils/utils.js';
+import { commandErrorMsg, getPathTemp, downloadMediaSafe, unwrapMessage } from '../../../utils/utils.js';
 import * as userController from '../../controllers/UserController.js';
 import { createNameSticker } from '../../api/sticker.js';
 
@@ -55,7 +54,21 @@ const command: Command = {
         return;
       }
 
-      if (dataMsg.type !== typeMessages.IMAGE && dataMsg.type !== typeMessages.VIDEO) {
+      let isImageMedia = dataMsg.type === typeMessages.IMAGE || dataMsg.type === 'imageMessage';
+      let isVideoMedia = dataMsg.type === typeMessages.VIDEO || dataMsg.type === 'videoMessage';
+
+      if (!isImageMedia && !isVideoMedia) {
+        const inner = unwrapMessage(dataMsg.message?.message || dataMsg.message);
+        if (inner?.imageMessage) {
+          dataMsg.type = typeMessages.IMAGE;
+          isImageMedia = true;
+        } else if (inner?.videoMessage) {
+          dataMsg.type = typeMessages.VIDEO;
+          isVideoMedia = true;
+        }
+      }
+
+      if (!isImageMedia && !isVideoMedia) {
         await sock.sendText(id_chat!, textMessage.figurinhas.smeme.msgs.erro);
         return;
       }
@@ -63,8 +76,8 @@ const command: Command = {
       await sock.sendReact(message.key, '🕒', id_chat);
       await sock.sendText(id_chat, textMessage.figurinhas.smeme.msgs.espera);
 
-      const isImage = dataMsg.mimetype === 'image/jpeg' || dataMsg.mimetype === 'image/png';
-      const bufferSticker = await downloadMediaMessage(dataMsg.message, 'buffer', {});
+      const isImage = isImageMedia || dataMsg.mimetype === 'image/jpeg' || dataMsg.mimetype === 'image/png';
+      const bufferSticker = await downloadMediaSafe(dataMsg.message, dataMsg.type);
 
       const outputPath = getPathTemp('mp4');
 

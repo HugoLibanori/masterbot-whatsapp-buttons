@@ -7,18 +7,19 @@ const reactCooldown = new NodeCache({ stdTTL: 5, useClones: false });
 
 export async function sendReact(
   sock: types.MyWASocket,
-  messageId: types.MyWAMessage,
+  messageId: types.MyWAMessage | any,
   emoji: string,
   chat_id: string,
 ): Promise<void> {
-  const keyId = (messageId as any)?.key?.id ?? '';
+  const key = messageId?.key || messageId;
+  const keyId = key?.id ?? '';
   const dedupeKey = `${chat_id}:${keyId}:${emoji}`;
   if (reactCooldown.has(dedupeKey)) return;
   reactCooldown.set(dedupeKey, true);
 
   await schedule(() =>
     sock.sendMessage(chat_id, {
-      react: { text: emoji, key: messageId },
+      react: { text: emoji, key },
     }),
   );
 }

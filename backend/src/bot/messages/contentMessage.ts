@@ -1,7 +1,7 @@
 import { getContentType, generateWAMessageFromContent } from '@innovatorssoft/baileys';
 
 import { MessageContent, TypeMessages } from '../../interfaces/index.js';
-import { getDefaultMessageContent, removeWhatsAppFormatting } from '../../utils/utils.js';
+import { getDefaultMessageContent, removeWhatsAppFormatting, unwrapMessage, isViewOnceMessage } from '../../utils/utils.js';
 import * as grupoController from '../controllers/GrupoController.js';
 import * as userController from '../controllers/UserController.js';
 import * as types from '../../types/BaileysTypes/index.js';
@@ -9,24 +9,25 @@ import { groupCache } from '../../utils/caches.js';
 
 const normalizeQuoted = (raw: any): any => {
   if (!raw) return null;
+  const unwrapped = unwrapMessage(raw);
 
   if (
-    typeof raw === 'object' &&
-    (raw.extendedTextMessage ||
-      raw.imageMessage ||
-      raw.videoMessage ||
-      raw.stickerMessage ||
-      raw.audioMessage ||
-      raw.documentMessage)
+    typeof unwrapped === 'object' &&
+    (unwrapped.extendedTextMessage ||
+      unwrapped.imageMessage ||
+      unwrapped.videoMessage ||
+      unwrapped.stickerMessage ||
+      unwrapped.audioMessage ||
+      unwrapped.documentMessage)
   ) {
-    return raw;
+    return unwrapped;
   }
 
-  if (typeof raw === 'string') {
-    return { extendedTextMessage: { text: raw } };
+  if (typeof unwrapped === 'string') {
+    return { extendedTextMessage: { text: unwrapped } };
   }
 
-  return raw;
+  return unwrapped;
 };
 
 const contentMessage = async (
@@ -63,7 +64,8 @@ const contentMessage = async (
 
     if (!message.message) return messageContent;
 
-    const msg = message.message;
+    const rawMsg = message.message;
+    const msg = unwrapMessage(rawMsg);
     const type = getContentType(msg);
     const numberBot = sock.user?.lid?.replace(/:\d+/, '');
     const numberOwner = await userController.getOwner();
@@ -185,13 +187,13 @@ const contentMessage = async (
 
       messageContent.command =
         (buttonRaw
-          ? buttonRaw.toLowerCase().trim().split(' ')[0]
-          : messageContent.textFull?.split(' ')[0]?.toLowerCase()) ||
+          ? buttonRaw.toLowerCase().trim().split(/\s+/)[0]
+          : messageContent.textFull?.trim().split(/\s+/)[0]?.toLowerCase()) ||
         '';
       messageContent.args =
         (buttonRaw
-          ? buttonRaw.trim().split(' ').slice(1)
-          : messageContent.textFull?.split(' ').slice(1)) ??
+          ? buttonRaw.trim().split(/\s+/).slice(1)
+          : messageContent.textFull?.trim().split(/\s+/).slice(1)) ??
         [];
       messageContent.message = msg;
       messageContent.messageMedia = type !== typeMessages.TEXT && type !== typeMessages.EXTEXT;
@@ -381,12 +383,15 @@ const contentMessage = async (
 
     if (msg && messageContent.quotedMsg) {
       const contextInfo = msg.extendedTextMessage?.contextInfo;
-      let quotedMessageRaw =
-        contextInfo?.quotedMessage?.viewOnceMessageV2Extension?.message ||
-        contextInfo?.quotedMessage?.viewOnceMessageV2?.message ||
-        contextInfo?.quotedMessage;
+      let quotedMessageRaw = unwrapMessage(contextInfo?.quotedMessage);
 
-      const quotedMsgId = contextInfo?.participant || contextInfo?.remoteJidAlt || '';
+      const quotedMsgId =
+        contextInfo?.participant ||
+        contextInfo?.remoteJid ||
+        contextInfo?.remoteJidAlt ||
+        (messageContent.isGroup ? '' : messageContent.id_chat) ||
+        messageContent.sender ||
+        '';
 
       if (quotedMessageRaw && quotedMsgId) {
         const quotedMessage = normalizeQuoted(quotedMessageRaw);
@@ -399,7 +404,13 @@ const contentMessage = async (
         const seconds = quotedContent.seconds;
         const mimetype = quotedContent.mimetype;
         const caption = quotedContent.caption;
-        const viewOnce = quotedContent.viewOnce;
+        const viewOnce =
+          quotedContent.viewOnce === true ||
+          Boolean(
+            contextInfo?.quotedMessage?.viewOnceMessage ||
+              contextInfo?.quotedMessage?.viewOnceMessageV2 ||
+              contextInfo?.quotedMessage?.viewOnceMessageV2Extension,
+          );
 
         const bodyText =
           (contextInfo?.quotedMessage?.conversation as string) ||
@@ -435,7 +446,22 @@ const contentMessage = async (
           console.warn('Falha ao gerar WAMessage a partir da quotedMessage:', e);
         }
 
-        const message_vunica = !!typeQuoted && typeof typeQuoted === 'string' && viewOnce === true;
+        if (!generatedMessage && quotedMessage) {
+          generatedMessage = {
+            key: { id: quotedMsgId, remoteJid: id_chat },
+            message: quotedMessage,
+          };
+        }
+
+        const message_vunica =
+          (!!typeQuoted && typeof typeQuoted === 'string' && viewOnce === true) ||
+          isViewOnceMessage(contextInfo?.quotedMessage) ||
+          isViewOnceMessage(quotedContent) ||
+          Boolean(
+            contextInfo?.quotedMessage?.viewOnceMessage ||
+              contextInfo?.quotedMessage?.viewOnceMessageV2 ||
+              contextInfo?.quotedMessage?.viewOnceMessageV2Extension,
+          );
 
         messageContent.contentQuotedMsg = {
           type: typeQuoted,

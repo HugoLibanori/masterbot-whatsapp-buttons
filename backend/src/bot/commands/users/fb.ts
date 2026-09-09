@@ -10,6 +10,7 @@ import { commandErrorMsg, createText } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import * as types from '../../../types/BaileysTypes/index.js';
 import { downloadQueue } from '../../../utils/downloadQueue.js';
+import { extractDownloadLink } from '../../../utils/linkExtractor.js';
 
 const command: Command = {
   name: 'fb',
@@ -29,56 +30,73 @@ const command: Command = {
     dataBot: Partial<Bot>,
     textMessage,
   ): Promise<CommandReturn> => {
-    const { id_chat, textReceived, command } = messageContent;
+    const { id_chat, command } = messageContent;
 
     const botInfo = dataBot;
 
     try {
-      if (!args.length) return await sock.replyText(id_chat, commandErrorMsg(command), message);
-      let usuarioURL = textReceived;
-      if (
-        !usuarioURL.match(
-          new RegExp(
-            /(?:^|)(https?:\/\/(?:www\.)?(mbasic\.facebook|m\.facebook|facebook|facebook\.com|fb|fb\.watch)\/(?:stories\/\d+\/[^\s]+|[^\s]+))/gi,
-          ),
-        )
-      ) {
-        return await sock.replyText(id_chat, textMessage.downloads.fb.msgs.erro_link, message);
+      const extracted = extractDownloadLink(messageContent, message);
+      if (!extracted.url) {
+        return await sock.replyText(
+          id_chat,
+          '❌ Envie o comando com o link do Facebook ou responda a uma mensagem que contenha o link!\n\nExemplo: *!fb https://www.facebook.com/...*',
+          message,
+        );
       }
+
+      const usuarioURL = extracted.url;
+      const targetMessage = extracted.targetMessage;
+
+      if (extracted.platform !== 'facebook') {
+        return await sock.replyText(
+          id_chat,
+          '❌ O link informado/respondido não é um link válido do Facebook.',
+          targetMessage,
+        );
+      }
+
       await downloadQueue.enqueue(
         'facebook',
         'Facebook',
         async () => {
+          await sock.sendReact(message.key, '⏳', id_chat);
           const { resultado: resultadoFB } = await getMediaFacebook(usuarioURL);
-          if (!resultadoFB) return;
-          if (resultadoFB.duration > 300000)
-            return await sock.replyText(id_chat, textMessage.downloads.fb.msgs.limite, message);
+          if (!resultadoFB) {
+            await sock.sendReact(message.key, '❌', id_chat);
+            return;
+          }
+          if (resultadoFB.duration > 300000) {
+            await sock.sendReact(message.key, '❌', id_chat);
+            return await sock.replyText(id_chat, textMessage.downloads.fb.msgs.limite, targetMessage);
+          }
           const mensagemEspera = createText(
             textMessage.downloads.fb.msgs.espera,
             resultadoFB.title,
             duration.default(String(resultadoFB.duration).replace('.', '')).format('m:ss'),
           );
-          await sock.replyText(id_chat, mensagemEspera, message);
+          await sock.replyText(id_chat, mensagemEspera, targetMessage);
           await sock.replyFileBuffer(
             typeMessages.VIDEO,
             id_chat,
             resultadoFB.buffer,
             '',
-            message,
+            targetMessage,
             'video/mp4',
           );
+          await sock.sendReact(message.key, '✅', id_chat);
         },
         {
           onWaiting: async (pos, name) => {
             await sock.replyText(
               id_chat,
               `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 downloads em andamento. Seu pedido está na fila na posição *#${pos}* e começará automaticamente assim que liberar um slot!`,
-              message,
+              targetMessage,
             );
           },
         },
       );
     } catch (err: any) {
+      await sock.sendReact(message.key, '❌', id_chat);
       if (!err.erro) throw err;
       await sock.replyText(
         id_chat,

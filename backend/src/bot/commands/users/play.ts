@@ -8,6 +8,7 @@ import { commandErrorMsg, createText } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import * as api from '../../api/downloads.js';
 import { downloadQueue } from '../../../utils/downloadQueue.js';
+import { extractDownloadLink } from '../../../utils/linkExtractor.js';
 
 const command: Command = {
   name: 'play',
@@ -30,32 +31,63 @@ const command: Command = {
     const { id_chat, command, textReceived } = messageContent;
 
     try {
-      if (!args.length) return await sock.replyText(id_chat, commandErrorMsg(command), message);
-      let textUser = textReceived?.trim();
-      let videoUrl: string;
+      const extracted = extractDownloadLink(messageContent, message);
+      let videoUrl = '';
+      const targetMessage = extracted.targetMessage;
 
-      if (textUser.startsWith('http')) {
-        videoUrl = textUser;
+      if (extracted.url) {
+        if (extracted.platform !== 'youtube') {
+          return await sock.replyText(
+            id_chat,
+            '❌ O link informado/respondido não é um link válido do YouTube.',
+            targetMessage,
+          );
+        }
+        videoUrl = extracted.url;
       } else {
-        const results = await api.getInfoVideoYT(textUser);
-        if (!results) {
-          return await sock.replyText(id_chat, '❌ Não encontrei nada no YouTube.', message);
+        const query = (
+          extracted.extraArgs ||
+          textReceived ||
+          (messageContent.quotedMsg && messageContent.contentQuotedMsg
+            ? messageContent.contentQuotedMsg.body || messageContent.contentQuotedMsg.caption
+            : '') ||
+          ''
+        ).trim();
+
+        if (!query) {
+          return await sock.replyText(
+            id_chat,
+            '❌ Envie o comando com o link ou nome da música do YouTube, ou responda a uma mensagem que contenha o link!\n\nExemplo: *!play https://www.youtube.com/watch?v=...* ou *!play nome da musica*',
+            message,
+          );
+        }
+
+        const results = await api.getInfoVideoYT(query);
+        if (!results || !results.resultado?.videoId) {
+          return await sock.replyText(id_chat, '❌ Não encontrei nada no YouTube.', targetMessage);
         }
         videoUrl = `https://www.youtube.com/watch?v=${results.resultado?.videoId}`;
       }
+
       await downloadQueue.enqueue(
         'youtube_audio',
         'YouTube Música (Play)',
         async () => {
-          await sock.sendReact(message.key, '🕒', id_chat);
+          await sock.sendReact(message.key, '⏳', id_chat);
 
           const { resultado: resultadoInfoVideo } = await api.getDataVideo(videoUrl);
 
-          if (resultadoInfoVideo?.isLiveContent)
-            return await sock.replyText(id_chat, textMessage.downloads.play.msgs.erro_live, message);
-          else if (Number(resultadoInfoVideo?.durationFormatted) > 900)
-            return await sock.replyText(id_chat, textMessage.downloads.play.msgs.limite, message);
-          if (!resultadoInfoVideo) return;
+          if (resultadoInfoVideo?.isLiveContent) {
+            await sock.sendReact(message.key, '❌', id_chat);
+            return await sock.replyText(id_chat, textMessage.downloads.play.msgs.erro_live, targetMessage);
+          } else if (Number(resultadoInfoVideo?.durationFormatted) > 900) {
+            await sock.sendReact(message.key, '❌', id_chat);
+            return await sock.replyText(id_chat, textMessage.downloads.play.msgs.limite, targetMessage);
+          }
+          if (!resultadoInfoVideo) {
+            await sock.sendReact(message.key, '❌', id_chat);
+            return;
+          }
 
           const mensagemEspera = createText(
             textMessage.downloads.play.msgs.espera,
@@ -63,34 +95,46 @@ const command: Command = {
             resultadoInfoVideo.durationFormatted || '',
           );
 
-          const imgUrl = resultadoInfoVideo.thumbnail!;
+          const imgUrl = resultadoInfoVideo.thumbnail;
+          if (imgUrl) {
+            try {
+              const bufferImg = await axios.get(imgUrl, { responseType: 'arraybuffer' });
+              await sock.replyFileBuffer(
+                typeMessages.IMAGE,
+                id_chat,
+                bufferImg.data,
+                mensagemEspera,
+                targetMessage,
+              );
+            } catch {
+              await sock.replyText(id_chat, mensagemEspera, targetMessage);
+            }
+          } else {
+            await sock.replyText(id_chat, mensagemEspera, targetMessage);
+          }
 
-          const bufferImg = await axios.get(imgUrl, { responseType: 'arraybuffer' });
-
-          await sock.sendImage(id_chat, bufferImg.data, mensagemEspera);
-
-          await sock.sendReact(message.key, '✅', id_chat);
           await sock.replyFileBuffer(
             typeMessages.AUDIO,
             id_chat,
             resultadoInfoVideo.buffer,
             '',
-            message,
+            targetMessage,
             'audio/mpeg',
           );
+          await sock.sendReact(message.key, '✅', id_chat);
         },
         {
           onWaiting: async (pos, name) => {
             await sock.replyText(
               id_chat,
               `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 pedidos sendo baixados. Sua música está na fila na posição *#${pos}* e será baixada automaticamente assim que liberar um slot!`,
-              message,
+              targetMessage,
             );
           },
         },
       );
     } catch (err: any) {
-      await sock.sendReact(message, '❌', id_chat);
+      await sock.sendReact(message.key, '❌', id_chat);
       if (!err.erro) throw err;
       await sock.replyText(
         id_chat,

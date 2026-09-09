@@ -1,9 +1,8 @@
-import { downloadMediaMessage } from '@innovatorssoft/baileys';
 import * as types from '../../../types/BaileysTypes/index.js';
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
 
 import { ISocket } from '../../../types/MyTypes/index.js';
-import { commandErrorMsg, verificarSeWebpEhAnimado } from '../../../utils/utils.js';
+import { commandErrorMsg, verificarSeWebpEhAnimado, downloadMediaSafe } from '../../../utils/utils.js';
 import { typeMessages } from '../../messages/contentMessage.js';
 import { stickerFroImage } from '../../api/sticker.js';
 
@@ -34,10 +33,9 @@ const command: Command = {
       if (contentQuotedMsg?.message?.message?.stickerMessage?.url === 'https://web.whatsapp.net')
         contentQuotedMsg.message.message.stickerMessage.url = `https://mmg.whatsapp.net${contentQuotedMsg?.message?.message?.stickerMessage?.directPath}&mms3=true`;
 
-      const bufferSticker = await downloadMediaMessage(
+      const bufferSticker = await downloadMediaSafe(
         contentQuotedMsg?.message as types.MyWAMessage,
-        'buffer',
-        {},
+        'sticker',
       );
 
       const isAnimated = await verificarSeWebpEhAnimado(bufferSticker);

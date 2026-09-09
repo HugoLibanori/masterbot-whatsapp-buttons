@@ -1,4 +1,3 @@
-import { downloadMediaMessage } from '@innovatorssoft/baileys';
 import * as types from '../../../types/BaileysTypes/index.js';
 
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
@@ -7,6 +6,7 @@ import { typeMessages } from '../../messages/contentMessage.js';
 import { createNameSticker } from '../../api/sticker.js';
 import * as userController from '../../controllers/UserController.js';
 import * as api from '../../api/sticker.js';
+import { downloadMediaSafe, unwrapMessage } from '../../../utils/utils.js';
 
 const command: Command = {
   name: 'ssf',
@@ -43,7 +43,16 @@ const command: Command = {
         seconds: quotedMsg ? contentQuotedMsg?.seconds : seconds,
       };
 
-      if (dataMsg.type !== typeMessages.IMAGE) {
+      let isImage = dataMsg.type === typeMessages.IMAGE || dataMsg.type === 'imageMessage';
+      if (!isImage) {
+        const inner = unwrapMessage(dataMsg.message?.message || dataMsg.message);
+        if (inner?.imageMessage) {
+          dataMsg.type = typeMessages.IMAGE;
+          isImage = true;
+        }
+      }
+
+      if (!isImage) {
         await sock.sendText(id_chat, textMessage.figurinhas.ssf.msgs.erro_imagem);
         return;
       }
@@ -51,7 +60,7 @@ const command: Command = {
       await sock.sendReact(message.key, '🕒', id_chat);
       await sock.sendText(id_chat, textMessage.figurinhas.ssf.msgs.espera);
 
-      const bufferMidia = await downloadMediaMessage(dataMsg.message, 'buffer', {});
+      const bufferMidia = await downloadMediaSafe(dataMsg.message, dataMsg.type);
       const bufferBg = await api.removeBackground(
         bufferMidia,
         dataBot.apis?.removebg?.api_key || '',

@@ -6,6 +6,7 @@ import { commandErrorMsg, createText, downloadBufferLink } from '../../../utils/
 import { typeMessages } from '../../messages/contentMessage.js';
 import axios from 'axios';
 import { downloadQueue } from '../../../utils/downloadQueue.js';
+import { extractDownloadLink } from '../../../utils/linkExtractor.js';
 
 interface TiktokMedia {
   tipo: 'image' | 'video' | string;
@@ -74,57 +75,71 @@ const command: Command = {
     dataBot: Partial<Bot>,
     textMessage,
   ): Promise<CommandReturn> => {
-    const { id_chat, textReceived, command } = messageContent;
+    const { id_chat, command } = messageContent;
     const botInfo = dataBot;
 
     try {
-      if (!args.length) {
-        return await sock.replyText(id_chat, commandErrorMsg(command), message);
+      const extracted = extractDownloadLink(messageContent, message);
+      if (!extracted.url) {
+        return await sock.replyText(
+          id_chat,
+          '❌ Envie o comando com o link do TikTok ou responda a uma mensagem que contenha o link!\n\nExemplo: *!tk https://vm.tiktok.com/...*',
+          message,
+        );
       }
 
-      const linkMidia = textReceived;
+      const linkMidia = extracted.url;
+      const targetMessage = extracted.targetMessage;
 
-      if (!/^(https?:\/\/)?(www\.)?(vm\.tiktok\.com|tiktok\.com|vt\.tiktok\.com)\/.+$/i.test(linkMidia)) {
-        return await sock.replyText(id_chat, textMessage.downloads.tk.msgs.erro_link, message);
+      if (extracted.platform !== 'tiktok') {
+        return await sock.replyText(
+          id_chat,
+          '❌ O link informado/respondido não é um link válido do TikTok.',
+          targetMessage,
+        );
       }
 
       await downloadQueue.enqueue(
         'tiktok',
         'TikTok',
         async () => {
-          await sock.replyText(id_chat, textMessage.downloads.tk.msgs.espera, message);
+          await sock.sendReact(message.key, '⏳', id_chat);
+          await sock.replyText(id_chat, textMessage.downloads.tk.msgs.espera, targetMessage);
 
           const item = await fetchTiktokLinks(linkMidia, dataBot);
 
           if (!item) {
-            return await sock.replyText(id_chat, 'Mídia não encontrada ou inválida.', message);
+            await sock.sendReact(message.key, '❌', id_chat);
+            return await sock.replyText(id_chat, 'Mídia não encontrada ou inválida.', targetMessage);
           }
 
           if (!item.tipo.includes('video_post')) {
-            await sock.replyFileBuffer(typeMessages.IMAGE, id_chat, item.resultado, '', message);
+            await sock.replyFileBuffer(typeMessages.IMAGE, id_chat, item.resultado, '', targetMessage);
           } else if (item.tipo.includes('video_post')) {
             await sock.replyFileBuffer(
               typeMessages.VIDEO,
               id_chat,
               item.resultado,
               '',
-              message,
+              targetMessage,
               'video/mp4',
             );
           }
+          await sock.sendReact(message.key, '✅', id_chat);
         },
         {
           onWaiting: async (pos, name) => {
             await sock.replyText(
               id_chat,
               `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 downloads em andamento. Seu pedido está na fila na posição *#${pos}* e começará automaticamente assim que liberar um slot!`,
-              message,
+              targetMessage,
             );
           },
         },
       );
     } catch (err: any) {
       console.error('Erro Tk:', err);
+      await sock.sendReact(message.key, '❌', id_chat);
       await sock.replyText(
         id_chat,
         createText(textMessage.outros.erro_api, command, 'Erro ao baixar mídia.'),

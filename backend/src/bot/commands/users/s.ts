@@ -1,15 +1,17 @@
-import { downloadMediaMessage } from '@innovatorssoft/baileys';
 import * as types from '../../../types/BaileysTypes/index.js';
 import fs from 'fs';
 import { exec } from 'child_process';
-import https from 'https';
-
-const ipv4Agent = new https.Agent({ family: 4 });
 
 import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
 import { ISocket } from '../../../types/MyTypes/index.js';
 import { typeMessages } from '../../messages/contentMessage.js';
-import { getPathTemp, circleMask, commandErrorMsg } from '../../../utils/utils.js';
+import {
+  getPathTemp,
+  circleMask,
+  commandErrorMsg,
+  downloadMediaSafe,
+  unwrapMessage,
+} from '../../../utils/utils.js';
 import { createNameSticker } from '../../api/sticker.js';
 import * as userController from '../../controllers/UserController.js';
 
@@ -46,12 +48,27 @@ const command: Command = {
         seconds: quotedMsg ? contentQuotedMsg?.seconds : seconds,
       };
 
-      if (dataMsg.type !== typeMessages.IMAGE && dataMsg.type !== typeMessages.VIDEO) {
+      // Se o tipo não for imagem nem vídeo, verificar se dentro da mensagem há imagem ou vídeo
+      let isImage = dataMsg.type === typeMessages.IMAGE || dataMsg.type === 'imageMessage';
+      let isVideo = dataMsg.type === typeMessages.VIDEO || dataMsg.type === 'videoMessage';
+
+      if (!isImage && !isVideo) {
+        const inner = unwrapMessage(dataMsg.message?.message || dataMsg.message);
+        if (inner?.imageMessage) {
+          dataMsg.type = typeMessages.IMAGE;
+          isImage = true;
+        } else if (inner?.videoMessage) {
+          dataMsg.type = typeMessages.VIDEO;
+          isVideo = true;
+        }
+      }
+
+      if (!isImage && !isVideo) {
         await sock.sendText(id_chat, commandErrorMsg(command));
         return;
       }
 
-      let bufferMidia = await downloadMediaMessage(dataMsg.message, 'buffer', { agent: ipv4Agent } as any);
+      let bufferMidia = await downloadMediaSafe(dataMsg.message, dataMsg.type);
 
       if (dataMsg.type === typeMessages.VIDEO && dataMsg.seconds! > 10) {
         const originalPath = getPathTemp('mp4');
@@ -125,10 +142,16 @@ const command: Command = {
           } catch { }
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       if (fs.existsSync(inputPathCircleVideo)) fs.unlinkSync(inputPathCircleVideo);
       if (fs.existsSync(outputPathCircleVideo)) fs.unlinkSync(outputPathCircleVideo);
-      console.log(error);
+      console.error('Erro no comando s:', error?.message || error);
+      if (messageContent?.id_chat) {
+        await sock.sendText(
+          messageContent.id_chat,
+          '❌ Não foi possível criar a figurinha. Certifique-se de que a imagem ou vídeo ainda está acessível.',
+        );
+      }
     }
   },
 };

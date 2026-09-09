@@ -6,6 +6,7 @@ import { typeMessages } from '../../messages/contentMessage.js';
 import axios from 'axios';
 import { snapsave } from 'snapsave-media-downloader';
 import { downloadQueue } from '../../../utils/downloadQueue.js';
+import { extractDownloadLink } from '../../../utils/linkExtractor.js';
 
 interface InstagramMedia {
   tipo: 'image' | 'video' | string;
@@ -66,36 +67,59 @@ const command: Command = {
     dataBot: Partial<Bot>,
     textMessage,
   ): Promise<CommandReturn> => {
-    const { id_chat, textReceived, command } = messageContent;
+    const { id_chat, command } = messageContent;
 
     try {
-      if (!args.length) return await sock.replyText(id_chat, commandErrorMsg(command), message);
-
-      let [linkMidia, index] = textReceived.split(', ');
-      const midiaIndex = Number(index) - 1 || 0;
-
-      if (!linkMidia.match(/(?:^|)(https?:\/\/www\.instagram\.com\/\w+\/[^\s]+)(?=\s|$)/gi)) {
-        await sock.sendReact(message.key, '❗', id_chat);
-        return await sock.replyText(id_chat, textMessage.downloads.ig.msgs.erro_link, message);
+      const extracted = extractDownloadLink(messageContent, message);
+      if (!extracted.url) {
+        return await sock.replyText(
+          id_chat,
+          '❌ Envie o comando com o link do Instagram ou responda a uma mensagem que contenha o link!\n\nExemplo: *!ig https://www.instagram.com/reel/...*',
+          message,
+        );
       }
 
-      if (linkMidia.match(/https?:\/\/(www\.)?instagram\.com\/stories\/[a-zA-Z0-9_.]+\/?/g)) {
+      const linkMidia = extracted.url;
+      const targetMessage = extracted.targetMessage;
+      let midiaIndex = 0;
+      if (extracted.extraArgs) {
+        const parsedIndex = parseInt(extracted.extraArgs.replace(/\D+/g, ''), 10);
+        if (!isNaN(parsedIndex) && parsedIndex > 0) {
+          midiaIndex = parsedIndex - 1;
+        }
+      }
+
+      if (extracted.platform !== 'instagram') {
         await sock.sendReact(message.key, '❗', id_chat);
-        return await sock.replyText(id_chat, textMessage.downloads.ig.msgs.isStoties, message);
+        return await sock.replyText(
+          id_chat,
+          '❌ O link informado/respondido não é um link válido do Instagram.',
+          targetMessage,
+        );
+      }
+
+      if (linkMidia.includes('/stories/')) {
+        await sock.sendReact(message.key, '❗', id_chat);
+        return await sock.replyText(id_chat, textMessage.downloads.ig.msgs.isStoties, targetMessage);
       }
 
       await downloadQueue.enqueue(
         'instagram',
         'Instagram',
         async () => {
-          await sock.sendReact(message.key, '🕒', id_chat);
-          await sock.replyText(id_chat, textMessage.downloads.ig.msgs.espera, message);
+          await sock.sendReact(message.key, '⏳', id_chat);
+          await sock.replyText(id_chat, textMessage.downloads.ig.msgs.espera, targetMessage);
 
           const resultadoIG = await fetchInstagramLinks(linkMidia, dataBot);
           const item = resultadoIG;
 
           if (!item || !item[midiaIndex]) {
-            return await sock.replyText(id_chat, 'Mídia não encontrada ou índice inválido.', message);
+            await sock.sendReact(message.key, '❌', id_chat);
+            return await sock.replyText(
+              id_chat,
+              'Mídia não encontrada ou índice inválido.',
+              targetMessage,
+            );
           }
 
           const baileysSock = await sock.getInstance();
@@ -104,13 +128,13 @@ const command: Command = {
             await baileysSock.sendMessage(
               id_chat,
               { image: { url: item[midiaIndex].url }, caption: '' },
-              { quoted: message },
+              { quoted: targetMessage },
             );
           } else {
             await baileysSock.sendMessage(
               id_chat,
               { video: { url: item[midiaIndex].url }, caption: '' },
-              { quoted: message },
+              { quoted: targetMessage },
             );
           }
 
@@ -121,16 +145,17 @@ const command: Command = {
             await sock.replyText(
               id_chat,
               `⏳ *Fila de Downloads (${name})*\n\nJá existem 2 downloads em andamento. Seu pedido está na fila na posição *#${pos}* e começará automaticamente assim que liberar um slot!`,
-              message,
+              targetMessage,
             );
           },
         },
       );
     } catch (err: any) {
       console.error('Erro IG:', err);
+      await sock.sendReact(message.key, '❌', id_chat);
       await sock.replyText(
         id_chat,
-        createText(textMessage.outros.erro_api, command, 'Erro ao baixar mídia.'),
+        createText(textMessage.outros.erro_api, command, 'Erro ao baixar mídia do Instagram.'),
         message,
       );
     }

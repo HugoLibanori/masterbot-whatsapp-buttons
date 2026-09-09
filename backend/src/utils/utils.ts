@@ -1,4 +1,5 @@
 import { downloadMediaMessage } from '@innovatorssoft/baileys';
+import { downloadMediaSafe, ipv4Agent, unwrapMessage } from './mediaHelper.js';
 import readline from 'readline';
 import qrcode from 'qrcode-terminal';
 import chalk from 'chalk';
@@ -187,7 +188,7 @@ export const autoSticker = async (
     if (type === typeMessages.IMAGE || type === typeMessages.VIDEO) {
       if (type === typeMessages.VIDEO && seconds! > 10) return false;
       await sock.sendReact(message.key, '🕒', id_chat);
-      let bufferMidia = await downloadMediaMessage(message, 'buffer', {});
+      let bufferMidia = await downloadMediaSafe(message, type);
       if (!bufferMidia) return false;
       let { resultado: resultadoSticker } = await api.createNameSticker(bufferMidia, {
         pack: packSticker ? packSticker?.trim() : pack_sticker?.trim(),
@@ -886,3 +887,5 @@ export const converterDataISOParaTimestampEmSegundos = (dataISO: string): number
 
   return timestampEmSegundos;
 };
+
+export { downloadMediaSafe, ipv4Agent, unwrapMessage, isViewOnceMessage } from './mediaHelper.js';

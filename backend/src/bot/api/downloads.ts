@@ -562,11 +562,11 @@ export const obterYTMP4 = async (
     const { stdout: infoJson } = await execAsync(`${commonArgs} -j "${url}"`);
     const info = JSON.parse(infoJson);
 
-    // Baixar o vídeo para um arquivo temporário para garantir a muxagem correta (essencial para o WhatsApp)
+    // Baixar o vídeo para um arquivo temporário para garantir a muxagem correta (essencial para o WhatsApp e Shorts)
     const tempVideoPath = getPathTemp('mp4');
     return new Promise((resolve) => {
       exec(
-        `${commonArgs} -f "bv[vcodec^=avc1][height<=480]+ba[acodec^=mp4a]/b[vcodec^=avc1][height<=480]/best[height<=480]" -o "${tempVideoPath}" "${url}"`,
+        `${commonArgs} -f "bv*[vcodec^=avc1][height<=720]+ba*[acodec^=mp4a]/bv*[height<=720]+ba/best[height<=720]/best" --recode-video mp4 -o "${tempVideoPath}" "${url}"`,
         { maxBuffer: 100 * 1024 * 1024 },
         async (error) => {
           if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath);
@@ -577,8 +577,20 @@ export const obterYTMP4 = async (
           }
 
           try {
-            const videoBuffer = fs.readFileSync(tempVideoPath);
-            if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
+            let finalPath = tempVideoPath;
+            if (!fs.existsSync(finalPath)) {
+              const baseWithoutExt = tempVideoPath.replace(/\.mp4$/, '');
+              const possibleFiles = [
+                `${baseWithoutExt}.mp4`,
+                `${baseWithoutExt}.mkv`,
+                `${baseWithoutExt}.webm`,
+              ];
+              const found = possibleFiles.find((f) => fs.existsSync(f));
+              if (found) finalPath = found;
+            }
+
+            const videoBuffer = fs.readFileSync(finalPath);
+            if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath);
             resolve({
               resultado: {
                 buffer: videoBuffer,
