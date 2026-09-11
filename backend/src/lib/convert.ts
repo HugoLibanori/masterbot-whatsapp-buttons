@@ -43,7 +43,7 @@ export async function convertGroupMetadataToGrupo(
     },
     block_cmds: [],
     lista_negra: [],
-    openai: {
+    gemini: {
       status: false,
     },
   };

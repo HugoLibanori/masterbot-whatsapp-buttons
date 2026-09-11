@@ -19,9 +19,9 @@ export default function configWaSocket(
     msgRetryCounterCache: retryCache,
     syncFullHistory: false,
     markOnlineOnConnect: true,
-    connectTimeoutMs: 60000,
-    keepAliveIntervalMs: 30000,
-    defaultQueryTimeoutMs: 60000,
+    connectTimeoutMs: 30000,
+    keepAliveIntervalMs: 15000,
+    defaultQueryTimeoutMs: 30000,
     generateHighQualityLinkPreview: false,
     shouldIgnoreJid: (jid) => isJidBroadcast(jid) || isJidNewsletter(jid),
     getMessage: async (key: types.MyWAMessageKey): Promise<types.MyWAMessageContent> => {

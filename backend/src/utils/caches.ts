@@ -7,6 +7,8 @@ const retryCacheRaw = new NodeCache({ stdTTL: 5 * 60, useClones: false });
 const groupCacheRaw = new NodeCache({ stdTTL: 0, useClones: false });
 const messageStoreCacheRaw = new NodeCache({ stdTTL: 5 * 60, useClones: false });
 const avisoLimiteDiarioCacheRaw = new NodeCache({ stdTTL: 120, useClones: false });
+const userCacheRaw = new NodeCache({ stdTTL: 15, maxKeys: 2000, useClones: false });
+const ownerCacheRaw = new NodeCache({ stdTTL: 60, useClones: false });
 
 // Session context
 let currentSession = '';
@@ -51,6 +53,8 @@ export const retryCache = new SessionCache<any>(retryCacheRaw);
 export const groupCache = new SessionCache<types.MyGroupMetadata>(groupCacheRaw);
 export const messageStoreCache = new SessionCache<any>(messageStoreCacheRaw);
 export const avisoLimiteDiarioCache = new SessionCache<any>(avisoLimiteDiarioCacheRaw);
+export const userCache = new SessionCache<any>(userCacheRaw);
+export const ownerCache = new SessionCache<any>(ownerCacheRaw);
 
 export function updateGroupCacheParam<T extends keyof types.MyGroupMetadata>(
   jid: string,

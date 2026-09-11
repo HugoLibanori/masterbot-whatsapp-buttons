@@ -6,6 +6,7 @@ import { User } from '../../interfaces/index.js';
 import Bot from '../../database/models/Bot.js';
 import { resetCooldown } from '../../utils/cooldownUtils.js';
 import { getClientDB } from '../../database/index.js';
+import { userCache, ownerCache } from '../../utils/caches.js';
 
 export const resetOwnerBySession = async (sessionName: string) => {
   getClientDB(sessionName);
@@ -56,8 +57,12 @@ export const registerUser = async (sender: string, senderLid: string, pushName: 
   return await Users.create(user);
 };
 
-export const getUser = async (id: string) => {
+export const getUser = async (id: string, useCache = true): Promise<User | null> => {
   if (!id) return null;
+  if (useCache) {
+    const cached = userCache.get<User>(id);
+    if (cached) return cached;
+  }
   const user = await Users.findOne({
     where: {
       [Op.or]: [{ id_usuario: id }, { id_lid: id }],
@@ -85,6 +90,10 @@ export const getUser = async (id: string) => {
     }
   }
 
+  userCache.set(id, plain);
+  if (plain.id_usuario && plain.id_usuario !== id) userCache.set(plain.id_usuario, plain);
+  if (plain.id_lid && plain.id_lid !== id) userCache.set(plain.id_lid, plain);
+
   return plain;
 };
 
@@ -95,6 +104,8 @@ export const getAllUsers = async (): Promise<string[]> => {
 
 export const getUserLid = async (id_usuario: string): Promise<string | null> => {
   if (!id_usuario) return null;
+  const cached = userCache.get<User>(id_usuario);
+  if (cached?.id_lid) return cached.id_lid;
   const user = await Users.findOne({
     where: {
       [Op.or]: [{ id_usuario: id_usuario }, { id_lid: id_usuario }],
@@ -104,13 +115,24 @@ export const getUserLid = async (id_usuario: string): Promise<string | null> => 
 };
 
 export const getOwner = async (): Promise<string> => {
+  const cached = ownerCache.get<string>('owner_jid');
+  if (cached) return cached;
   const owner = await Users.findOne({ where: { tipo: 'dono' } });
-  return owner ? owner.get({ plain: true }).id_usuario : 'Sem dono';
+  const jid = owner ? owner.get({ plain: true }).id_usuario : 'Sem dono';
+  ownerCache.set('owner_jid', jid);
+  return jid;
 };
 
 export const getOwnerData = async (): Promise<User | null> => {
+  const cached = ownerCache.get<User>('owner_data');
+  if (cached) return cached;
   const owner = await Users.findOne({ where: { tipo: 'dono' } });
-  return owner ? owner.get({ plain: true }) : null;
+  const data = owner ? owner.get({ plain: true }) : null;
+  if (data) {
+    ownerCache.set('owner_data', data);
+    ownerCache.set('owner_jid', data.id_usuario);
+  }
+  return data;
 };
 
 export const getPack = async (id_usuario: string): Promise<string | null> => {
@@ -125,6 +147,7 @@ export const getPack = async (id_usuario: string): Promise<string | null> => {
 
 export const updateLid = async (id_usuario: string, id_lid: string): Promise<string | null> => {
   if (!id_usuario) return null;
+  userCache.del(id_usuario);
   const user = await Users.findOne({
     where: {
       [Op.or]: [{ id_usuario: id_usuario }, { id_lid: id_usuario }],
@@ -192,6 +215,7 @@ export const getUserWarning = async (id_usuario: string): Promise<number> => {
 
 export const resetWarn = async (id_usuario: string) => {
   if (!id_usuario) return;
+  userCache.del(id_usuario);
   await Users.update(
     { advertencia: 0 },
     {
@@ -203,11 +227,14 @@ export const resetWarn = async (id_usuario: string) => {
 };
 
 export const resetOwner = async () => {
+  ownerCache.del(['owner_data', 'owner_jid']);
   await Users.update({ tipo: 'comum' }, { where: { tipo: 'dono' } });
 };
 
 export const updateOwner = async (id_usuario: string) => {
   if (!id_usuario) return;
+  ownerCache.del(['owner_data', 'owner_jid']);
+  userCache.del(id_usuario);
   await Users.update(
     { tipo: 'dono' },
     {
@@ -241,6 +268,7 @@ export const getUsersType = async (tipo: string): Promise<Users[]> => {
 
 export const changeUserType = async (id_usuario: string, tipo: string) => {
   if (!id_usuario) return;
+  userCache.del(id_usuario);
   await Users.update(
     { tipo },
     {
@@ -265,6 +293,7 @@ export const setUserPlan = async (id_usuario: string, tipo: 'premium' | 'vip', d
     expiraEm.setDate(expiraEm.getDate() + dias);
   }
 
+  userCache.del(id_usuario);
   await Users.update(
     {
       tipo,
@@ -341,11 +370,13 @@ export const alterarTipoUsuario = async (
 };
 
 export const resetCommandsDay = async () => {
+  userCache.flushAll();
   await Users.update({ comandos_dia: 0 }, { where: {} });
 };
 
 export const resetUserDayCommands = async (id_usuario: string) => {
   if (!id_usuario) return;
+  userCache.del(id_usuario);
   await Users.update(
     { comandos_dia: 0 },
     {
@@ -357,12 +388,14 @@ export const resetUserDayCommands = async (id_usuario: string) => {
 };
 
 export const limparComandos = async (qtd = 0) => {
+  userCache.flushAll();
   await Users.update({ comandos_total: qtd, comandos_dia: qtd }, { where: {} });
   return true;
 };
 
 export const updateName = async (id_usuario: string, nome: string) => {
   if (!id_usuario) return;
+  userCache.del(id_usuario);
   await Users.update(
     { nome },
     {
@@ -415,6 +448,7 @@ export const verificarUltrapassouLimiteComandos = async (
 
 export const addContagemDiaria = async (id_usuario: string) => {
   if (!id_usuario) return;
+  userCache.del(id_usuario);
   await Users.update(
     {
       comandos_total: Sequelize.literal('comandos_total + 1'),
@@ -430,6 +464,7 @@ export const addContagemDiaria = async (id_usuario: string) => {
 
 export const addContagemTotal = async (id_usuario: string) => {
   if (!id_usuario) return;
+  userCache.del(id_usuario);
   await Users.update(
     { comandos_total: Sequelize.literal('comandos_total + 1') },
     {

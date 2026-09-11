@@ -37,7 +37,7 @@ const command: Command = {
 
     for (const [nameApi, apikey] of Object.entries(objApis)) {
       const config =
-        apikey.api_key !== ''
+        (apikey as any)?.api_key !== ''
           ? createText(textMessage.admin.statusapis.msgs.resposta_variavel.on, nameApi)
           : createText(textMessage.admin.statusapis.msgs.resposta_variavel.off, nameApi);
 

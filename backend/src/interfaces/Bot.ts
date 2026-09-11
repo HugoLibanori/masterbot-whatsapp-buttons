@@ -34,14 +34,14 @@ export interface Bot {
     rapidAPI: {
       api_key: string;
     };
-    openai: {
+    gemini: {
       api_key: string;
     };
     removebg: {
       api_key: string;
     };
   };
-  openai: { status: boolean };
+  gemini?: { status: boolean };
   xp: { status: boolean };
   auto_reply_cooldown_seconds?: number;
 }

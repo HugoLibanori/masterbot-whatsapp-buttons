@@ -74,10 +74,11 @@ const command: Command = {
           String(dataBd.antiflood.intervalo),
         )
       : textMessage.grupo.status.msgs.resposta_variavel.antiflood.off;
-    //OpenAi
-    resposta += dataBd.openai?.status
-      ? textMessage.grupo.status.msgs.resposta_variavel.openai.on
-      : textMessage.grupo.status.msgs.resposta_variavel.openai.off;
+    // Gemini IA
+    const geminiStatus = (dataBd as any).gemini?.status ?? false;
+    resposta += geminiStatus
+      ? (textMessage.grupo.status.msgs.resposta_variavel as any).gemini?.on || 'Recurso Gemini (IA) : ✅\n'
+      : (textMessage.grupo.status.msgs.resposta_variavel as any).gemini?.off || 'Recurso Gemini (IA) : ❌\n';
     //Contador
     resposta += dataBd.contador?.status
       ? createText(

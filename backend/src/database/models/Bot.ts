@@ -53,7 +53,7 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
     rapidAPI: {
       api_key: string;
     };
-    openai: {
+    gemini: {
       api_key: string;
     };
     removebg: {
@@ -178,7 +178,7 @@ export default class Bot extends Model<InferAttributes<Bot>, InferCreationAttrib
             rapidinsta: {
               api_key: '',
             },
-            openai: {
+            gemini: {
               api_key: '',
             },
             removebg: {

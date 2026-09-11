@@ -98,7 +98,7 @@ export const registerGroupsInital = async (groupInfo: GroupMetadata[]): Promise<
             block_cmds: [],
             lista_negra: [],
             descricao: grupo.desc ?? '',
-            openai: { status: false },
+            gemini: { status: false },
             plano_ativo: false,
             expira_em: null,
           };
@@ -728,27 +728,116 @@ export const getAllGroups = async (sock?: ISocket): Promise<Grupos[]> => {
   return await Grupos.findAll();
 };
 
+export interface PlayerInfo {
+  jid: string;
+  lid: string;
+  phone: string;
+  cleanId: string;
+  nome: string;
+}
+
+export const resolvePlayerInfo = (
+  grupoId: string,
+  targetJidOrId: string,
+  pushName?: string | null,
+): PlayerInfo => {
+  const clean = (targetJidOrId || '').replace(/@.*$/, '');
+  const metadata = groupCache.get(grupoId) as types.MyGroupMetadata | undefined;
+
+  if (metadata?.participants) {
+    const p = metadata.participants.find(
+      (part) =>
+        part.id === targetJidOrId ||
+        (part as any).lid === targetJidOrId ||
+        part.id?.replace(/@.*$/, '') === clean ||
+        (part as any).lid?.replace(/@.*$/, '') === clean,
+    );
+    if (p) {
+      const phone = p.id?.replace(/@.*$/, '') || clean;
+      return {
+        jid: p.id || (phone ? `${phone}@s.whatsapp.net` : ''),
+        lid: (p as any).lid || (targetJidOrId.endsWith('@lid') ? targetJidOrId : ''),
+        phone,
+        cleanId: clean,
+        nome: pushName || phone,
+      };
+    }
+  }
+
+  const isLid = targetJidOrId.endsWith('@lid');
+  const isPn = targetJidOrId.endsWith('@s.whatsapp.net');
+  const phone = isPn ? clean : !isLid ? clean : '';
+
+  return {
+    jid: isPn ? targetJidOrId : phone ? `${phone}@s.whatsapp.net` : '',
+    lid: isLid ? targetJidOrId : '',
+    phone: phone || clean,
+    cleanId: clean,
+    nome: pushName || phone || clean,
+  };
+};
+
+export const matchesPlayer = (player: PlayerInfo, msg: MessageContent): boolean => {
+  if (!player) return false;
+  const sender = msg.sender || '';
+  const senderLid = msg.senderLid || '';
+  const senderClean = sender.replace(/@.*$/, '');
+  const senderLidClean = senderLid.replace(/@.*$/, '');
+
+  if (player.jid && (sender === player.jid || senderClean === player.jid.replace(/@.*$/, ''))) {
+    return true;
+  }
+  if (player.lid && (senderLid === player.lid || senderLidClean === player.lid.replace(/@.*$/, ''))) {
+    return true;
+  }
+  if (player.cleanId && (senderClean === player.cleanId || senderLidClean === player.cleanId)) {
+    return true;
+  }
+  if (player.phone && (senderClean === player.phone || senderLidClean === player.phone)) {
+    return true;
+  }
+  return false;
+};
+
+const getMentionTags = (players: PlayerInfo[]): string[] => {
+  const mentions: string[] = [];
+  for (const p of players) {
+    if (p.jid && !mentions.includes(p.jid)) mentions.push(p.jid);
+    if (p.lid && !mentions.includes(p.lid)) mentions.push(p.lid);
+    if (p.phone && !mentions.includes(`${p.phone}@s.whatsapp.net`)) {
+      mentions.push(`${p.phone}@s.whatsapp.net`);
+    }
+  }
+  return mentions;
+};
+
 export const iniciarJogo = async (
   grupoId: string,
-  jogador1: string,
-  jogador2: string,
+  jogador1: PlayerInfo,
+  jogador2: PlayerInfo,
   c: ISocket,
   prefixo: string,
 ): Promise<void> => {
   jogoDaVelha[grupoId] = {
     tabuleiro: ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'],
-    jogadores: [jogador1, jogador2],
-    atual: jogador1,
+    jogador1,
+    jogador2,
+    atual: 1,
     simboloAtual: '❌',
     jogoAtivo: false,
-    adversario: jogador2,
     aceito: false,
+    criadoEm: Date.now(),
   };
+
+  const tagJ1 = jogador1.phone ? `@${jogador1.phone}` : `@${jogador1.cleanId}`;
+  const tagJ2 = jogador2.phone ? `@${jogador2.phone}` : `@${jogador2.cleanId}`;
 
   await c.sendTextWithMentions(
     grupoId,
-    `🎮 Jogo da Velha iniciado entre @${jogador1} e @${jogador2}!\n\nAguardando o jogador @${jogador2} aceitar o convite.\nPara aceitar envie:\n\`${prefixo}jogar\``,
-    [jogador1 + '@s.whatsapp.net', jogador2 + '@s.whatsapp.net'],
+    `🎮 *Jogo da Velha iniciado entre ${tagJ1} e ${tagJ2}!*\n\n` +
+      `Aguardando o jogador ${tagJ2} aceitar o convite.\n` +
+      `Para aceitar, envie:\n\`${prefixo}jogar\``,
+    getMentionTags([jogador1, jogador2]),
   );
 };
 
@@ -766,7 +855,7 @@ export const jogoDaVelhaFunction = async (
   const mensagemGrupo = mensagemBaileys.isGroup;
   const comandos_info = commandInfo();
 
-  if (comando === mensagemBaileys.command && mensagemBaileys.textReceived === `guia`) {
+  if (comando === mensagemBaileys.command && mensagemBaileys.textReceived === 'guia') {
     await c.sendText(
       mensagemBaileys.id_chat,
       '❔ USO DO COMANDO ❔\n\n' + comandos_info.diversao.jogodavelha.guia,
@@ -774,13 +863,67 @@ export const jogoDaVelhaFunction = async (
     return false;
   }
 
+  // 1. Iniciar ou cancelar jogo
   if (mensagemBaileys.command === comando && mensagemGrupo) {
-    const jogador1 = mensagemBaileys.sender?.replace('@s.whatsapp.net', '');
-    const jogador2 = mensagemBaileys.grupo?.mentionedJid[0]?.replace('@s.whatsapp.net', '');
-    if (!jogador2) {
-      await c.sendText(mensagemBaileys.id_chat, 'Mencione o jogador com quem deseja jogar.');
+    const sub = mensagemBaileys.args?.[0]?.toLowerCase();
+    if (sub === 'cancelar' || sub === 'desistir' || sub === 'sair') {
+      const jg = jogoDaVelha[mensagemBaileys.id_chat];
+      if (jg) {
+        if (matchesPlayer(jg.jogador1, mensagemBaileys) || matchesPlayer(jg.jogador2, mensagemBaileys)) {
+          delete jogoDaVelha[mensagemBaileys.id_chat];
+          await c.sendText(mensagemBaileys.id_chat, '🛑 Partida de Jogo da Velha cancelada com sucesso.');
+          return false;
+        }
+      }
+    }
+
+    // Se já houver um jogo ativo recente (menos de 5 minutos)
+    const jgExistente = jogoDaVelha[mensagemBaileys.id_chat];
+    if (jgExistente && Date.now() - (jgExistente.criadoEm || 0) < 5 * 60 * 1000) {
+      if (jgExistente.jogoAtivo || !jgExistente.aceito) {
+        if (matchesPlayer(jgExistente.jogador1, mensagemBaileys) && sub === 'novo') {
+          delete jogoDaVelha[mensagemBaileys.id_chat];
+        } else {
+          await c.sendText(
+            mensagemBaileys.id_chat,
+            `⚠️ Já existe um Jogo da Velha em andamento neste grupo!\nPara cancelar, envie: \`${prefix}jogodavelha cancelar\``,
+          );
+          return false;
+        }
+      }
+    }
+
+    // Identifica o desafiado por menção ou citação
+    let targetJid = mensagemBaileys.grupo?.mentionedJid?.[0];
+    if (!targetJid && mensagemBaileys.quotedMsg) {
+      targetJid =
+        mensagemBaileys.contentQuotedMsg?.sender ||
+        (mensagemBaileys.message?.extendedTextMessage?.contextInfo?.participant as string);
+    }
+
+    if (!targetJid) {
+      await c.sendText(
+        mensagemBaileys.id_chat,
+        '⚠️ Mencione ou responda a mensagem de quem você deseja desafiar!\nEx: `!jogodavelha @usuario`',
+      );
       return false;
     }
+
+    const jogador1 = resolvePlayerInfo(
+      mensagemBaileys.id_chat,
+      mensagemBaileys.sender || mensagemBaileys.senderLid || '',
+      mensagemBaileys.pushName,
+    );
+    const jogador2 = resolvePlayerInfo(
+      mensagemBaileys.id_chat,
+      targetJid,
+    );
+
+    if (jogador1.phone && jogador2.phone && jogador1.phone === jogador2.phone) {
+      await c.sendText(mensagemBaileys.id_chat, '❌ Você não pode jogar contra você mesmo!');
+      return false;
+    }
+
     await iniciarJogo(mensagemBaileys.id_chat, jogador1, jogador2, c, prefix!);
     return false;
   } else if (comando === mensagemBaileys.command && !mensagemGrupo) {
@@ -788,81 +931,128 @@ export const jogoDaVelhaFunction = async (
     return false;
   }
 
-  if (
-    jogoDaVelha[mensagemBaileys.id_chat]?.adversario + '@s.whatsapp.net' ===
-      mensagemBaileys.sender &&
-    mensagemBaileys.command === `${prefix}jogar`
-  ) {
-    jogoDaVelha[mensagemBaileys.id_chat].jogoAtivo = true;
-    jogoDaVelha[mensagemBaileys.id_chat].aceito = true;
-    await c.sendTextWithMentions(
-      mensagemBaileys.id_chat,
-      `⛔ O jogador @${jogoDaVelha[mensagemBaileys.id_chat]?.adversario} aceitou o convite.\n\n${await exibirTabuleiro(
-        jogoDaVelha[mensagemBaileys.id_chat]?.tabuleiro,
-      )}\n\nPara jogar envie um número de 1 a 9, somente o número.\nEx: Se você enviar o numero 5 o bot vai trocar o simbolo 5️⃣ por ❌ ou ⭕.`,
-      [jogoDaVelha[mensagemBaileys.id_chat]?.adversario + '@s.whatsapp.net'],
-    );
-    return false;
+  // 2. Aceitar o convite (!jogar ou jogar)
+  const textoLimpo = (mensagemBaileys.textFull || '').trim().toLowerCase();
+  const isJogarCmd =
+    mensagemBaileys.command === `${prefix}jogar` ||
+    mensagemBaileys.command === 'jogar' ||
+    textoLimpo === `${prefix}jogar` ||
+    textoLimpo === 'jogar';
+
+  if (isJogarCmd && mensagemGrupo) {
+    const jogo = jogoDaVelha[mensagemBaileys.id_chat];
+    if (jogo && !jogo.aceito) {
+      if (matchesPlayer(jogo.jogador2, mensagemBaileys)) {
+        jogo.jogoAtivo = true;
+        jogo.aceito = true;
+
+        const tagAdv = jogo.jogador2.phone ? `@${jogo.jogador2.phone}` : jogo.jogador2.nome;
+        const tagJ1 = jogo.jogador1.phone ? `@${jogo.jogador1.phone}` : jogo.jogador1.nome;
+
+        await c.sendTextWithMentions(
+          mensagemBaileys.id_chat,
+          `🎮 *Convite Aceito!*\n\n` +
+            `O jogador ${tagAdv} aceitou o desafio de ${tagJ1}!\n\n` +
+            `${await exibirTabuleiro(jogo.tabuleiro)}\n\n` +
+            `👉 Vez de ${tagJ1} (${jogo.simboloAtual}) começar!\n` +
+            `Envie apenas o número de *1 a 9* da posição que deseja marcar.`,
+          getMentionTags([jogo.jogador1, jogo.jogador2]),
+        );
+        return false;
+      } else if (matchesPlayer(jogo.jogador1, mensagemBaileys)) {
+        await c.sendText(
+          mensagemBaileys.id_chat,
+          '⚠️ Você é o criador do jogo! Aguarde o seu adversário aceitar o convite digitando `!jogar`.',
+        );
+        return false;
+      } else {
+        const tagAdv = jogo.jogador2.phone ? `@${jogo.jogador2.phone}` : jogo.jogador2.nome;
+        await c.sendTextWithMentions(
+          mensagemBaileys.id_chat,
+          `⚠️ Apenas o jogador desafiado (${tagAdv}) pode aceitar a partida!`,
+          getMentionTags([jogo.jogador2]),
+        );
+        return false;
+      }
+    }
   }
-  if (jogoDaVelha[mensagemBaileys.id_chat] && /^[1-9]$/.test(mensagemBaileys.textFull!)) {
-    if (!jogoDaVelha[mensagemBaileys.id_chat]?.aceito) {
-      await c.sendText(mensagemBaileys.id_chat, '⛔ O adversário ainda não aceitou a partida.');
+
+  // 3. Jogadas com números de 1 a 9
+  const jogo = jogoDaVelha[mensagemBaileys.id_chat];
+  if (jogo && /^[1-9]$/.test(textoLimpo)) {
+    if (!jogo.aceito) {
+      if (matchesPlayer(jogo.jogador1, mensagemBaileys) || matchesPlayer(jogo.jogador2, mensagemBaileys)) {
+        await c.sendText(
+          mensagemBaileys.id_chat,
+          '⛔ O adversário ainda não aceitou a partida! Envie `!jogar` para aceitar.',
+        );
+        return false;
+      }
+      return true;
+    }
+
+    const jogadorDaVez = jogo.atual === 1 ? jogo.jogador1 : jogo.jogador2;
+    const outroJogador = jogo.atual === 1 ? jogo.jogador2 : jogo.jogador1;
+
+    // Se quem mandou o número não é nenhum dos jogadores do jogo, ignora (outra conversa)
+    if (!matchesPlayer(jogadorDaVez, mensagemBaileys) && !matchesPlayer(outroJogador, mensagemBaileys)) {
+      return true;
+    }
+
+    if (!matchesPlayer(jogadorDaVez, mensagemBaileys)) {
+      const tagVez = jogadorDaVez.phone ? `@${jogadorDaVez.phone}` : jogadorDaVez.nome;
+      await c.sendTextWithMentions(
+        mensagemBaileys.id_chat,
+        `⛔ Não é sua vez! Aguarde ${tagVez} jogar.`,
+        getMentionTags([jogadorDaVez]),
+      );
       return false;
     }
-    await fazerJogada(
-      mensagemBaileys.id_chat,
-      mensagemBaileys.sender?.replace('@s.whatsapp.net', ''),
-      mensagemBaileys.textFull!,
-      c,
-    );
-    return false;
-  }
-  return true;
-};
 
-export const fazerJogada = async (
-  grupoId: string,
-  jogador: string,
-  posicao: string,
-  c: ISocket,
-): Promise<boolean> => {
-  const jogo = jogoDaVelha[grupoId];
-  if (!jogo || !jogo.jogoAtivo) return false;
-  if (jogo.jogadores.indexOf(jogador) === -1) return false;
-  if (jogo.atual !== jogador) {
-    await c.sendTextWithMentions(grupoId, `⛔ Não é sua vez, @${jogador}!`, [
-      jogador + '@s.whatsapp.net',
-    ]);
-    return false;
-  }
-  const indice = parseInt(posicao) - 1;
-  if (jogo.tabuleiro[indice] === '❌' || jogo.tabuleiro[indice] === '⭕') {
-    await c.sendText(grupoId, '⚠️ Posição já ocupada! Escolha outro número.');
-    return false;
-  }
-  jogo.tabuleiro[indice] = jogo.simboloAtual;
-  if (await verificarVencedor(jogo.tabuleiro, jogo.simboloAtual)) {
+    // É a vez do jogador: executa a jogada
+    const indice = parseInt(textoLimpo, 10) - 1;
+    if (jogo.tabuleiro[indice] === '❌' || jogo.tabuleiro[indice] === '⭕') {
+      await c.sendText(mensagemBaileys.id_chat, '⚠️ Posição já ocupada! Escolha outro número de 1 a 9.');
+      return false;
+    }
+
+    jogo.tabuleiro[indice] = jogo.simboloAtual;
+
+    if (await verificarVencedor(jogo.tabuleiro, jogo.simboloAtual)) {
+      const tagVenc = jogadorDaVez.phone ? `@${jogadorDaVez.phone}` : jogadorDaVez.nome;
+      await c.sendTextWithMentions(
+        mensagemBaileys.id_chat,
+        `🏆 Parabéns ${tagVenc}! Você venceu o Jogo da Velha!\n\n${await exibirTabuleiro(jogo.tabuleiro)}`,
+        getMentionTags([jogadorDaVez]),
+      );
+      delete jogoDaVelha[mensagemBaileys.id_chat];
+      return false;
+    }
+
+    if (jogo.tabuleiro.every((pos: string) => pos === '❌' || pos === '⭕')) {
+      await c.sendText(
+        mensagemBaileys.id_chat,
+        `🤝 Deu Velha! O jogo terminou empatado!\n\n${await exibirTabuleiro(jogo.tabuleiro)}`,
+      );
+      delete jogoDaVelha[mensagemBaileys.id_chat];
+      return false;
+    }
+
+    // Alterna vez e símbolo
+    jogo.atual = jogo.atual === 1 ? 2 : 1;
+    jogo.simboloAtual = jogo.simboloAtual === '❌' ? '⭕' : '❌';
+    const proximoJogador = jogo.atual === 1 ? jogo.jogador1 : jogo.jogador2;
+    const tagProx = proximoJogador.phone ? `@${proximoJogador.phone}` : proximoJogador.nome;
+
     await c.sendTextWithMentions(
-      grupoId,
-      `🏆 @${jogador} venceu!\n\n${await exibirTabuleiro(jogo.tabuleiro)}`,
-      [jogador + '@s.whatsapp.net'],
+      mensagemBaileys.id_chat,
+      `${await exibirTabuleiro(jogo.tabuleiro)}\n\nAgora é a vez de ${tagProx} (${jogo.simboloAtual}) jogar!`,
+      getMentionTags([proximoJogador]),
     );
-    jogo.jogoAtivo = false;
     return false;
   }
-  if (jogo.tabuleiro.every((pos: string) => pos === '❌' || pos === '⭕')) {
-    await c.sendText(grupoId, `🤝 Empate!\n\n${await exibirTabuleiro(jogo.tabuleiro)}`);
-    jogo.jogoAtivo = false;
-    return false;
-  }
-  jogo.atual = jogo.jogadores[0] === jogo.atual ? jogo.jogadores[1] : jogo.jogadores[0];
-  jogo.simboloAtual = jogo.simboloAtual === '❌' ? '⭕' : '❌';
-  await c.sendTextWithMentions(
-    grupoId,
-    `${await exibirTabuleiro(jogo.tabuleiro)}\n\nAgora é a vez de @${jogo.atual} jogar!`,
-    [jogo.atual + '@s.whatsapp.net'],
-  );
-  return false;
+
+  return true;
 };
 
 export const verificarVencedor = async (tabuleiro: string[], simbolo: string): Promise<boolean> => {
@@ -1331,18 +1521,18 @@ export const filtroAntiFlood = async (
   }
 };
 
-export const changeOpenAI = async (id_grupo: string, status: boolean) => {
+export const changeGemini = async (id_grupo: string, status: boolean) => {
   const grupo = await Grupos.findOne({ where: { id_grupo } });
   if (!grupo) return;
-  const openaiAtualizado = {
-    ...grupo?.openai,
+  const geminiAtualizado = {
+    ...grupo?.gemini,
     status,
     msgs: [],
   };
   try {
-    await Grupos.update({ openai: openaiAtualizado }, { where: { id_grupo } });
+    await Grupos.update({ gemini: geminiAtualizado }, { where: { id_grupo } });
   } catch (err: any) {
-    console.error(`Erro ao escrever o arquivo ou obter NSFW: ${err.message}`);
+    console.error(`Erro ao atualizar status do Gemini no grupo: ${err.message}`);
   }
 };
 

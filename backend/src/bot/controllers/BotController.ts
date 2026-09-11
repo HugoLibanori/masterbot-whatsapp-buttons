@@ -71,7 +71,7 @@ export const registerBotData = async (sock?: ISocket) => {
           rapidAPI: {
             api_key: '',
           },
-          openai: {
+          gemini: {
             api_key: '',
           },
           removebg: {
@@ -301,7 +301,13 @@ export const updateCommands = async () => {
 export const getNameApis = async (dataBot: Partial<Bot>) => {
   try {
     const bot = await getBotData();
-    const apis = bot?.apis;
+    const apis = (bot?.apis || {}) as any;
+    if (apis.openai) {
+      delete apis.openai;
+    }
+    if (!apis.gemini) {
+      apis.gemini = { api_key: '' };
+    }
     return apis;
   } catch (error) {
     console.error('Erro ao obter dados do bot:', error);
@@ -313,8 +319,17 @@ export const addApikey = async (nameApi: string, apikey: string, botInfo: Partia
   const bot = botInfo;
   if (!bot.apis) return; // Segurança
 
-  const newApis = { ...bot.apis };
-  (newApis as any)[nameApi].api_key = apikey;
+  const cleanName = nameApi.toLowerCase();
+  const newApis = { ...bot.apis } as any;
+
+  if (newApis.openai) {
+    delete newApis.openai;
+  }
+
+  if (!newApis[cleanName]) {
+    newApis[cleanName] = { api_key: '' };
+  }
+  newApis[cleanName].api_key = apikey;
 
   // Atualiza APENAS as APIs
   await updateBotData({ apis: newApis });

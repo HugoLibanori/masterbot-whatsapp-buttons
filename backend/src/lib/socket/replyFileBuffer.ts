@@ -11,21 +11,22 @@ export async function replyFileBuffer(
   quetedMsg: types.MyWAMediaUpload,
   mimetype = '',
 ): Promise<types.MyWAMessage | undefined> {
+  const options = quetedMsg ? { quoted: quetedMsg } : undefined;
   if (type === typeMessages.VIDEO) {
     return await schedule(() =>
       sock.sendMessage(
         id_chat,
         { video: buffer, caption: legenda, mimetype },
-        { quoted: quetedMsg },
+        options,
       ),
     );
   } else if (type === typeMessages.IMAGE) {
     return await schedule(() =>
-      sock.sendMessage(id_chat, { image: buffer, caption: legenda }, { quoted: quetedMsg }),
+      sock.sendMessage(id_chat, { image: buffer, caption: legenda }, options),
     );
   } else if (type === typeMessages.AUDIO) {
     return await schedule(() =>
-      sock.sendMessage(id_chat, { audio: buffer, mimetype }, { quoted: quetedMsg }),
+      sock.sendMessage(id_chat, { audio: buffer, mimetype }, options),
     );
   }
   return;

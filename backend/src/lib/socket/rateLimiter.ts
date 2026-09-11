@@ -1,4 +1,4 @@
-const MIN_DELAY_MS = 1500;
+const MIN_DELAY_MS = 250;
 
 let queue: (() => Promise<any>)[] = [];
 let running = false;
@@ -20,7 +20,9 @@ async function runQueue() {
       console.error('Erro em tarefa do rateLimiter:', err);
     }
 
-    await sleep(MIN_DELAY_MS);
+    if (queue.length > 0) {
+      await sleep(MIN_DELAY_MS);
+    }
   }
 
   running = false;

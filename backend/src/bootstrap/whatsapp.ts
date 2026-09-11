@@ -14,7 +14,7 @@ import { BotData } from '../configs/configBot/BotData.js';
 import { retryCache, groupCache, messageStoreCache } from '../utils/caches.js';
 import { ensureSessionContext } from '../utils/sessionContext.js';
 import { useSequelizeAuthState } from '../utils/authDB.js';
-import { setSocket } from '../api/sessionRuntime.js';
+import { setSocket, getSocket } from '../api/sessionRuntime.js';
 
 let fullBoot = false;
 let botInfo: Partial<any> | null = null;
@@ -26,7 +26,30 @@ export const connectWhatsapp = async (
 ) => {
   ensureSessionContext(session_name);
   const { state, saveCreds } = await useSequelizeAuthState(session_name);
-  const { version } = await fetchLatestBaileysVersion();
+
+  // Fallback seguro caso esteja sem internet no momento da troca de Wi-Fi
+  let version: types.MyWAVersion = [2, 3000, 1017578490];
+  try {
+    const latest = await fetchLatestBaileysVersion();
+    if (latest?.version) version = latest.version;
+  } catch {
+    console.warn('[BAILEYS] Não foi possível verificar versão online (sem internet temporária). Usando versão estável local.');
+  }
+
+  // Se já existe um socket anterior para esta sessão, fecha-o antes de recriar
+  const prevSocket = getSocket(session_name);
+  if (prevSocket) {
+    try {
+      prevSocket.ev.removeAllListeners('connection.update');
+      prevSocket.ev.removeAllListeners('creds.update');
+      prevSocket.ev.removeAllListeners('messages.upsert');
+      if (typeof prevSocket.end === 'function') {
+        prevSocket.end(undefined);
+      }
+    } catch {
+      // ignora
+    }
+  }
 
   const sock: types.MyWASocket = makeWASocket(
     configWaSocket(state, retryCache, version, messageStoreCache, groupCache),

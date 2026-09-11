@@ -6,10 +6,10 @@ import { MessageContent, Command, Bot } from '../../../interfaces/index.js';
 import * as grupoController from '../../controllers/GrupoController.js';
 
 const command: Command = {
-  name: 'openai',
-  description: 'Ativa e desativa o openai.',
+  name: 'gemini',
+  description: 'Ativa e desativa o Gemini (IA) para conversar no grupo.',
   category: 'admins',
-  aliases: ['openai'], // não mude o index 0 do array pode dar erro no guia dos comandos.
+  aliases: ['gemini'],
   group: true,
   admin: true,
   owner: false,
@@ -28,12 +28,16 @@ const command: Command = {
       grupo: { dataBd },
     } = messageContent;
 
-    const newState = !dataBd.openai.status;
-    await grupoController.changeOpenAI(id_chat, newState);
+    const currentStatus = dataBd.gemini?.status ?? false;
+    const newState = !currentStatus;
+    await grupoController.changeGemini(id_chat, newState);
 
+    const msgObj = (textMessage.grupo as any).gemini?.msgs;
     const resposta = newState
-      ? textMessage.grupo.openai.msgs.ligado
-      : textMessage.grupo.openai.msgs.desligado;
+      ? msgObj?.ligado ||
+        '✅ O recurso de inteligência artificial (Gemini) foi ATIVADO com sucesso no grupo!'
+      : msgObj?.desligado ||
+        '❌ O recurso de inteligência artificial (Gemini) foi DESATIVADO com sucesso no grupo!';
 
     await sock.replyText(id_chat, resposta, message);
   },

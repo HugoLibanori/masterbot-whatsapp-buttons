@@ -6,10 +6,11 @@ import contentMessage from '../bot/messages/contentMessage.js';
 import * as grupoController from '../bot/controllers/GrupoController.js';
 import { BotData } from '../configs/configBot/BotData.js';
 import { checkingSendMessage } from '../bot/messages/checkingSendMessage.js';
-import { openaiMentionMiddleware } from '../middleware/openaiMentionMiddleware.js';
+import { geminiMentionMiddleware } from '../middleware/geminiMentionMiddleware.js';
 import { handleAllButtons } from './handleAllButtons.js';
 import { isSessionActive } from '../services/LicenseService.js';
 import { verificarCooldown } from '../utils/cooldownUtils.js';
+import { handlePendingReveal } from '../bot/commands/admins/revelar.js';
 
 export const handleMessageUpsert = async (sock: ISocket, messages: types.MyWAMessage) => {
   const msg = messages;
@@ -52,7 +53,8 @@ export const handleMessageUpsert = async (sock: ISocket, messages: types.MyWAMes
   if (!(await grupoController.filtroAntiFlood(sock, messageContent, dataBot))) return;
   if (!(await checkingSendMessage(sock, msg, messageContent, dataBot))) return;
   if (!(await grupoController.jogoDaVelhaFunction(sock, messageContent, dataBot))) return;
-  if (!(await openaiMentionMiddleware(sock, msg, messageContent, dataBot))) return;
+  if (!(await handlePendingReveal(sock, messageContent, msg))) return;
+  if (!(await geminiMentionMiddleware(sock, msg, messageContent, dataBot))) return;
 
   await checkingMessage(sock, msg, messageContent);
 };

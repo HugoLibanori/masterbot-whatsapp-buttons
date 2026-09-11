@@ -43,7 +43,7 @@ export default class Grupos extends Model<
   declare block_cmds: string[];
   declare lista_negra: string[];
   declare descricao: string;
-  declare openai: {
+  declare gemini: {
     status: boolean;
   };
   declare plano_ativo: boolean;
@@ -132,7 +132,7 @@ export default class Grupos extends Model<
           type: DataTypes.TEXT,
           allowNull: true,
         },
-        openai: {
+        gemini: {
           type: DataTypes.JSON,
           allowNull: false,
           defaultValue: { status: false },

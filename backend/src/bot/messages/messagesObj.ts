@@ -105,10 +105,10 @@ export function commandInfo() {
         msgs: {
           resposta: '🤖 M@ste® Bot:\n\n' + '{p1}',
           sem_api:
-            '[❗] A chave de acesso ao Chat GPT não foi configurada, utilize o comando *${prefixo}apis openai* para configurar.',
+            '[❗] A chave de acesso ao Gemini não foi configurada, utilize o comando *${prefixo}apis gemini* para configurar.',
           sem_resposta: '[❗] Nenhuma resposta foi gerada pelo M@ste®.',
-          on: '✅ OpenAi Ativado com sucesso.',
-          off: '❌ OpenAi Desativado com sucesso.',
+          on: '✅ Gemini (IA) Ativado com sucesso.',
+          off: '❌ Gemini (IA) Desativado com sucesso.',
         },
       },
       criarimg: {
@@ -742,9 +742,9 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
               on: 'Recurso Contador : ✅\n' + '- {p1}\n',
               off: 'Recurso Contador : ❌\n',
             },
-            openai: {
-              on: 'Recurso OpenAi : ✅\n',
-              off: 'Recurso OpenAi : ❌\n',
+            gemini: {
+              on: 'Recurso Gemini (IA) : ✅\n',
+              off: 'Recurso Gemini (IA) : ❌\n',
             },
             bloqueiocmds: {
               on: 'Bloqueio de comandos : ✅\n' + `{p1}\n`,
@@ -986,13 +986,13 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           desligado: '✅ O recurso de ANTI-FAKE foi desativado com sucesso',
         },
       },
-      openai: {
+      gemini: {
         descricao: '',
-        guia: `🚫 *[Comando: ${prefixo}openai]*\n🧠 Sintaxe:\n- *\`${prefixo}openai\`* - Liga/desliga o OPENAI em grupos.\n\n`,
+        guia: `🚫 *[Comando: ${prefixo}gemini]*\n🧠 Sintaxe:\n- *\`${prefixo}gemini\`* - Liga/desliga o GEMINI (IA) em grupos.\n\n`,
         msgs: {
-          ligado: '✅ O recurso de OPENAI foi ativado com sucesso',
-          desligado: '✅ O recurso de OPENAI foi desativado com sucesso',
-          offline: '[❗] O recurso de OPENAI offline no momento, tente novamente mais tarde.',
+          ligado: '✅ O recurso de inteligência artificial (GEMINI) foi ativado com sucesso',
+          desligado: '✅ O recurso de inteligência artificial (GEMINI) foi desativado com sucesso',
+          offline: '[❗] O recurso de GEMINI offline no momento, tente novamente mais tarde.',
         },
       },
       aflood: {
@@ -1771,7 +1771,7 @@ Aqui está a *chave Pix* para apoiar o criador do bot 👇.\n\n*Importante:* Val
           `> ⌬ Estabelecendo conexão com o servidor...`,
         msgs: {
           sucesso: '✅ Apikey adicionada com sucesso.',
-          sem_api: '[❗] OPENAI ativado, mas sua Apikey da OPENAI não está configurada.',
+          sem_api: '[❗] Gemini ativado, mas sua Apikey do GEMINI não está configurada. Use o comando *${prefixo}apis gemini* para configurar.',
           nome_api: `[❗] API NOME: *{p1}* não existe, de um *\`${prefixo}statusapis\`* para ver os nomes das API's`,
         },
       },

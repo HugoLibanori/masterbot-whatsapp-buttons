@@ -44,7 +44,7 @@ export interface Grupo {
   block_cmds: string[];
   lista_negra: string[];
   descricao: string;
-  openai: { status: boolean };
+  gemini?: { status: boolean };
   plano_ativo?: boolean;
   expira_em?: Date | null;
 }

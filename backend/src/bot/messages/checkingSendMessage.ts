@@ -57,17 +57,17 @@ export const checkingSendMessage = async (
     if (isGroup && !isOwnerBot && !dataBot.commands_gp) return false;
 
     // VERIFICANDO SE O USUARIO EXISTE E SE NÃO EXISTIR FAÇA O CADASTRO.
-    const userRegister = await userController.getUser(userId!);
+    let dataUser = await userController.getUser(userId!);
     const isLid = userId?.endsWith('@lid');
     const isNumber = userId?.startsWith('55');
 
-    if (!userRegister && (isNumber || isLid)) {
+    if (!dataUser && (isNumber || isLid)) {
       await userController.registerUser(userId, senderLid || '', pushName!);
+      dataUser = await userController.getUser(userId!);
     }
 
-    //VERIFICANDO SE LID FOI CADASTRADO, SE NÃO FOI, CADASTRE
-    const userLid = await userController.getUserLid(userId!);
-    if (!userLid && (isNumber || isLid)) {
+    // VERIFICANDO SE LID FOI CADASTRADO, SE NÃO FOI, CADASTRE
+    if (!dataUser?.id_lid && (isNumber || isLid) && senderLid) {
       await userController.updateLid(userId, senderLid || userId);
     }
 
@@ -78,7 +78,7 @@ export const checkingSendMessage = async (
       return false;
     }
 
-    //SE O CONTADOR TIVER ATIVADO E FOR UMA MENSAGEM DE GRUPO, VERIFICA SE O USUARIO EXISTE NO CONTADOR , REGISTRA ELE E ADICIONA A CONTAGEM
+    // SE O CONTADOR TIVER ATIVADO E FOR UMA MENSAGEM DE GRUPO, VERIFICA SE O USUARIO EXISTE NO CONTADOR , REGISTRA ELE E ADICIONA A CONTAGEM
     if (isGroup && dataBd?.contador?.status) {
       if (!userId || !id_group || !type) return false;
       await grupoController.checkRegisterCountParticipant(id_group, userId);
@@ -86,28 +86,29 @@ export const checkingSendMessage = async (
     }
 
     // VERIFICANDO SE O USUARIO JA TEM 3 ADVERTENCIAS E EXPULSANDO
-    let advertencias = await userController?.getUserWarning(userId!);
-    if (isGroup && advertencias === 3 && !isAdmin) {
+    const advertencias = dataUser?.advertencia ?? 0;
+    if (isGroup && advertencias >= 3 && !isAdmin) {
       await sock.removerParticipant(id_group, userId!);
       await userController.resetWarn(userId!);
       return false;
     }
 
-    // OBTENDO DADOS ATUALIZADOS DO USUÁRIO
-    const dataUser = await userController.getUser(userId!);
-
-    //SE FOR BLOQUEADO RETORNE
+    // SE FOR BLOQUEADO RETORNE
     if (userBlock) return false;
-    //SE O GRUPO ESTIVER COM O RECURSO 'MUTADO' LIGADO E USUARIO NÃO FOR ADMINISTRADOR
+    // SE O GRUPO ESTIVER COM O RECURSO 'MUTADO' LIGADO E USUARIO NÃO FOR ADMINISTRADOR
     if (isGroup && !isAdmin && dataBd?.mutar) return false;
-    //SE FOR MENSAGEM DE GRUPO, O BOT NÃO FOR ADMIN E ESTIVER COM RESTRIÇÃO DE MENSAGENS PARA ADMINS
+    // SE FOR MENSAGEM DE GRUPO, O BOT NÃO FOR ADMIN E ESTIVER COM RESTRIÇÃO DE MENSAGENS PARA ADMINS
     if (isGroup && !isBotAdmin && dataBd?.restrito_msg) return false;
 
-    //ATUALIZE NOME DO USUÁRIO
-    await userController.updateName(userId!, pushName ?? 'Sem nome!');
+    // ATUALIZE NOME DO USUÁRIO SE TIVER MUDADO
+    if (pushName && dataUser && dataUser.nome !== pushName) {
+      await userController.updateName(userId!, pushName);
+    }
 
     // VERIFICANDO EXPIRAÇÃO DO PLANO ATIVO DO USUÁRIO
-    await userController.checkUserExpiration(userId!);
+    if (dataUser?.plano_ativo && dataUser?.expira_em) {
+      await userController.checkUserExpiration(userId!);
+    }
 
     // VERIFICANDO SE O GRUPO POSSUI PLANO ATIVO (ACESSO ILIMITADO PARA TODOS OS MEMBROS DO GRUPO)
     const isGroupPlanActive = isGroup && id_group ? await grupoController.checkGroupPlanExpiration(id_group) : false;

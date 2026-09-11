@@ -7,7 +7,7 @@ export async function sendButtons(
   chatId: string,
   options: types.MyButtons,
 ): Promise<types.MyWAMessage> {
-  const { text, buttons, footer } = options;
+  const { text, buttons, footer, mentions } = options;
   if (!text || !buttons) {
     throw new Error('sendButtons: text and buttons are required');
   }
@@ -17,6 +17,7 @@ export async function sendButtons(
       text,
       buttons,
       footer,
+      mentions: mentions || [],
     }),
   );
 }

@@ -52,14 +52,9 @@ const contentMessage = async (
     messageContent.id_chat = id_chat_initial;
     messageContent.isGroup = id_chat_initial?.includes('@g.us') ?? false;
     // try to fill sender early, will be overridden later if message exists
-    try {
-      const participant = message.key?.participant || message.key?.remoteJid;
-      if (participant) {
-        const idUser = await userController.getUser(participant);
-        messageContent.sender = idUser?.id_usuario || '';
-      }
-    } catch (e: any) {
-      // console.error(e);
+    const participant = message.key?.participant || message.key?.remoteJid;
+    if (participant) {
+      messageContent.sender = participant.replace(/:\d+/, '');
     }
 
     if (!message.message) return messageContent;

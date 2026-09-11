@@ -4,18 +4,17 @@ import Conversation from '../../database/models/Conversation.js';
 import { Bot } from '../../interfaces/index.js';
 
 export class ConversationController {
-  async conversationOpenAI(
+  async conversationGemini(
     userId: string,
     mensagem: string,
     dataBot: Partial<Bot>,
     groupName?: string,
   ) {
-    // Usa a chave configurada no bot ou fallback para GEMINI_API_KEY do .env
-    const botKey = dataBot?.apis?.openai?.api_key || '';
+    const botKey = dataBot?.apis?.gemini?.api_key || '';
     const apiKey =
       (botKey && botKey.startsWith('AIza') ? botKey : '') ||
-      process.env.GEMINI_API_KEY ||
       botKey ||
+      process.env.GEMINI_API_KEY ||
       '';
     const genAI = new GoogleGenerativeAI(apiKey);
 

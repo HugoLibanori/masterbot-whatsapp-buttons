@@ -12,7 +12,7 @@ const textMessage = commandInfo();
 
 const conversationController = new ConversationController();
 
-export async function openaiMentionMiddleware(
+export async function geminiMentionMiddleware(
   sock: ISocket,
   message: types.MyWAMessage,
   messageContent: MessageContent,
@@ -40,10 +40,19 @@ export async function openaiMentionMiddleware(
     const comandoExiste = (await checkCommandExists(dataBot, command)).exists;
     if (comandoExiste) return true;
 
-    if (!dataGroup?.openai?.status || !textFull) return true;
+    const isAiEnabled = dataGroup?.gemini?.status ?? false;
+    if (!isAiEnabled || !textFull) return true;
 
-    if (dataBot.apis?.openai?.api_key === '') {
-      await sock.replyText(id_chat, textMessage.admin.apis.msgs.sem_api, message);
+    const apiKey =
+      dataBot.apis?.gemini?.api_key ||
+      process.env.GEMINI_API_KEY ||
+      '';
+    if (!apiKey) {
+      await sock.replyText(
+        id_chat,
+        '[❗] Gemini ativado, mas sua Apikey do GEMINI não está configurada. Use o comando !apis gemini para configurar.',
+        message,
+      );
       return false;
     }
 
@@ -51,7 +60,7 @@ export async function openaiMentionMiddleware(
     let botNumber = '';
     try {
       botNumber = await sock.getNumberBot();
-    } catch {}
+    } catch { }
 
     const rawBotSock = (sock as any).sock;
     const botRawCandidates = [
@@ -133,7 +142,7 @@ export async function openaiMentionMiddleware(
     await sock.sendReact(message.key, '💬', id_chat);
 
     const groupName = grupo?.name || dataGroup?.nome || '';
-    const resposta = await conversationController.conversationOpenAI(
+    const resposta = await conversationController.conversationGemini(
       id_group!,
       textUser,
       dataBot,

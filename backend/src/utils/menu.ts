@@ -137,11 +137,21 @@ export const menuUtilidades = () => {
 
 ➤ *\`${prefixo}voz idioma texto\`* - _Texto → Áudio_
 
+➤ *\`${prefixo}transcrever\`* - _Transcreve áudio para texto com IA (responda a um áudio)_
+
 🖼️ *IMAGENS*
 
 ➤ *\`${prefixo}rbg\`* - _Remove fundo da imagem_
 
 📌 *UTILIDADES*
+
+➤ *\`${prefixo}ia pergunta | foto\`* - _Tira dúvidas e analisa fotos com Inteligência Artificial_
+
+➤ *\`${prefixo}brasileirao [tabela|jogos|time]\`* - _Tabela, jogos ou busca por clube (Série A/B)_
+
+➤ *\`${prefixo}champions [tabela|jogos|time]\`* - _Tabela, jogos ou busca por clube da Champions League_
+
+➤ *\`${prefixo}noticias [semana|mundo|tech|busca]\`* - _Últimas notícias do dia, da semana ou por tema_
 
 ➤ *\`${prefixo}lembrete tempo texto\`* - _Agenda um alarme/lembrete (ex: 15m, 2h)_
 
@@ -247,7 +257,7 @@ export const menuGrupo = (admin: boolean) => {
 
 ➤ *\`${prefixo}aflood\`* - _Ativa/desativa o anti-flood._
 
-➤ *\`${prefixo}openai\`* - _ativa/desativa o openai para interagir com o grupo._
+➤ *\`${prefixo}gemini\`* - _Ativa/desativa a IA (Gemini) para conversar no grupo._
 ╰━━━━━━━━━━━━━╯
 
 ╭━⌨️ *ADMINISTRATIVO* ━╮
